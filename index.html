@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -224,6 +225,33 @@ a{color:inherit;text-decoration:none}
 </style>
 </head>
 <body>
+<div id="lock" style="position:fixed;inset:0;background:#0d0d0d;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-family:Georgia,serif;font-size:10px;color:#555;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:4px">The New Front Row</div>
+  <div style="font-family:Georgia,serif;font-size:22px;font-weight:500;color:#f0f0f0;letter-spacing:0.04em">NSJ MEDIA</div>
+  <div style="font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:#555;margin-bottom:16px">Command Center</div>
+  <div style="height:1px;width:120px;background:#b8975a;opacity:0.4;margin-bottom:8px"></div>
+  <input id="pw" type="password" placeholder="Enter password" style="background:#141414;border:0.5px solid #333;color:#f0f0f0;padding:10px 16px;border-radius:4px;font-size:13px;width:220px;text-align:center;outline:none" onkeydown="if(event.key==='Enter')chk()">
+  <button onclick="chk()" style="background:#b8975a;color:#000;border:none;padding:8px 24px;border-radius:4px;font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:4px">Enter</button>
+  <div id="perr" style="font-size:9px;color:#ef5350;display:none;margin-top:4px">Incorrect password</div>
+</div>
+<script>
+function chk(){
+  var v=document.getElementById('pw').value;
+  if(v==='TNFRNSJ01!'){
+    document.getElementById('lock').style.display='none';
+    localStorage.setItem('nsj_auth','1');
+  } else {
+    document.getElementById('perr').style.display='block';
+    document.getElementById('pw').value='';
+  }
+}
+window.addEventListener('load',function(){
+  if(localStorage.getItem('nsj_auth')==='1'){
+    var l=document.getElementById('lock');
+    if(l)l.style.display='none';
+  }
+});
+</script>
 <!-- WORK DASHBOARD -->
 <div id="work-dash" class="dashboard active">
 <div class="topbar"><div class="tb-row">
