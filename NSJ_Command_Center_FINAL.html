@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSJ Command Center</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--bg2:#141414;--bg3:#1c1c1c;--bg4:#222;--bd:#2a2a2a;--bd2:#333;--t1:#f0f0f0;--t2:#aaa;--t3:#555;--t4:#333;--gold:#b8975a;--font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--font-serif:Georgia,"Times New Roman",serif}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--t1);min-height:100vh}
+.dashboard{display:none}.dashboard.active{display:block}
+.topbar{background:var(--bg2);padding:10px 18px 0;border-bottom:0.5px solid var(--bd)}
+.tb-row{display:flex;align-items:flex-start;justify-content:space-between}
+.brand-l1{font-family:var(--font-serif);font-size:10px;color:var(--t2);letter-spacing:0.1em}
+.brand-l2{font-family:var(--font-serif);font-size:18px;font-weight:500;color:var(--t1);letter-spacing:0.04em;line-height:1;margin:1px 0}
+.brand-l3{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:var(--t3)}
+.tb-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding-bottom:10px}
+.clock{font-size:11px;color:var(--gold);font-weight:500}
+.dateline,.greet{font-size:8px;letter-spacing:0.07em;text-transform:uppercase;color:var(--t3)}
+.tb-btns{display:flex;gap:5px}
+.tog{font-size:7px;letter-spacing:0.07em;text-transform:uppercase;padding:3px 9px;border:0.5px solid var(--bd2);color:var(--t3);cursor:pointer;background:transparent;border-radius:3px;transition:all 0.15s}
+.tog:hover{border-color:var(--gold);color:var(--gold)}
+.tog.gold{background:var(--gold);color:#000;border-color:var(--gold)}
+.gold-bar{height:1px;background:var(--gold);opacity:0.25}
+.top-nav{display:flex;background:var(--bg2);border-bottom:0.5px solid var(--bd);overflow-x:auto}
+.tnav{font-size:8px;letter-spacing:0.1em;text-transform:uppercase;padding:8px 12px;cursor:pointer;color:var(--t3);border-bottom:1.5px solid transparent;margin-bottom:-0.5px;white-space:nowrap;transition:color 0.15s;flex-shrink:0}
+.tnav:hover{color:var(--t2)}.tnav.on{color:var(--gold);border-bottom-color:var(--gold);font-weight:500}
+.page{display:none}.page.on{display:block}
+.dash-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,160px)}
+.p-dash-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}
+.col{border-right:0.5px solid var(--bd);display:flex;flex-direction:column}.col:last-child{border-right:none}
+.col-hd{padding:8px 12px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);flex-shrink:0}
+.col-label{font-size:8px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--t2)}
+.col-act{font-size:8px;color:var(--t3);cursor:pointer}.col-act:hover{color:var(--gold)}
+.col-scroll{padding:10px 12px;flex:1;overflow-y:auto;max-height:520px;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+.col-scroll::-webkit-scrollbar{width:3px}.col-scroll::-webkit-scrollbar-track{background:transparent}
+.col-scroll::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+.p-col-scroll{padding:10px 12px;flex:1;overflow-y:auto;max-height:580px;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+.p-col-scroll::-webkit-scrollbar{width:3px}.p-col-scroll::-webkit-scrollbar-track{background:transparent}
+.p-col-scroll::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+.col-cards{padding:0;flex:1}
+.slabel{font-size:7px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.slabel::after{content:"";flex:1;height:0.5px;background:var(--bd)}
+.sep{border-top:0.5px solid var(--bd);margin:9px 0}
+.nadd{font-size:8px;color:var(--t3);cursor:pointer;margin-top:3px;display:inline-block}.nadd:hover{color:var(--gold)}
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
+.plat-card{background:var(--bg3);border-radius:10px;padding:10px;cursor:pointer;border:0.5px solid var(--bd2);transition:all 0.18s}
+.plat-card:hover{border-color:var(--t3);background:var(--bg4)}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.pc-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pc-badge{font-size:6px;padding:2px 5px;border-radius:8px;font-weight:500}
+.pc-name{font-size:10px;font-weight:500;color:var(--t1);margin-bottom:1px}
+.pc-handle{font-size:7px;color:var(--t3);margin-bottom:5px}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;padding-top:5px;border-top:0.5px solid var(--bd)}
+.pc-next{font-size:7px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:4px}
+.pc-open{font-size:7px;color:var(--gold);cursor:pointer;flex-shrink:0;font-weight:500}
+.news-item{padding:6px 0;border-bottom:0.5px solid var(--bd)}.news-item:last-child{border-bottom:none}
+.ni-src{font-size:7px;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);display:flex;justify-content:space-between;margin-bottom:2px}
+.ni-hed{font-size:10px;color:var(--t1);line-height:1.4;cursor:pointer;font-family:var(--font-serif)}.ni-hed:hover{color:var(--gold)}
+.rtabs{display:flex;margin-bottom:7px;overflow-x:auto;scrollbar-width:none}.rtabs::-webkit-scrollbar{display:none}
+.rtab{font-size:7px;letter-spacing:0.06em;text-transform:uppercase;padding:3px 7px;cursor:pointer;color:var(--t3);border:0.5px solid var(--bd);border-right:none;background:var(--bg2);white-space:nowrap;flex-shrink:0}
+.rtab:first-child{border-radius:3px 0 0 3px}.rtab:last-child{border-right:0.5px solid var(--bd);border-radius:0 3px 3px 0}
+.rtab.on{background:var(--gold);color:#000;border-color:var(--gold);font-weight:500}
+.trend-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:0.5px solid var(--bd);cursor:pointer}
+.trend-row:last-child{border-bottom:none}.trend-row:hover .tkw{color:var(--gold)}
+.tnum{font-size:8px;color:var(--t3);min-width:12px;margin-top:1px}
+.tkw{font-size:9px;font-weight:500;color:var(--t1);transition:color 0.15s;line-height:1.3;flex:1}
+.thot{font-size:7px;color:var(--gold);font-weight:500;margin-left:3px}
+.tvol{font-size:7px;color:var(--t3);margin-top:1px}
+.tcat{font-size:6px;padding:1px 4px;background:var(--bg3);border:0.5px solid var(--bd);color:var(--t3);border-radius:2px;text-transform:uppercase;flex-shrink:0}
+.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mnav-btn{font-size:10px;padding:2px 6px;cursor:pointer;background:transparent;border:0.5px solid var(--bd2);color:var(--t2);border-radius:3px}
+.mnav-btn:hover{border-color:var(--gold);color:var(--gold)}
+.month-lbl{font-size:9px;font-weight:500;color:var(--t1)}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.mch{font-size:6px;text-align:center;color:var(--t3);padding:2px 1px;font-weight:500}
+.mcd{font-size:7px;text-align:center;padding:3px 1px;cursor:pointer;color:var(--t3);border-radius:3px}
+.mcd:hover{background:var(--bg3)}
+.mcd.td{background:var(--gold);color:#000;font-weight:500;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;margin:auto}
+.mcd.om{color:var(--t4)}
+.todo-row{display:flex;align-items:flex-start;gap:5px;padding:3px 0}
+.chk{width:11px;height:11px;border:0.5px solid var(--bd2);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:2px}
+.chk.done{background:var(--gold);border-color:var(--gold)}
+.ct{font-size:9px;color:var(--t1);line-height:1.4}.ct.done{color:var(--t3);text-decoration:line-through}
+.qabtn{display:flex;align-items:center;padding:4px 7px;border:0.5px solid var(--bd);margin-bottom:3px;cursor:pointer;font-size:8px;color:var(--t2);background:var(--bg2);gap:5px;border-radius:4px;transition:all 0.1s}
+.qabtn:hover{border-color:var(--gold);color:var(--gold)}
+.qa-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.topic-panel{border:0.5px solid var(--bd2);border-radius:7px;margin-bottom:5px;overflow:hidden}
+.topic-hd{padding:7px 10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--bg3);transition:background 0.12s}
+.topic-hd:hover{background:var(--bg4)}
+.topic-title{font-size:10px;font-weight:500;color:var(--t1)}
+.topic-actions{display:flex;gap:4px}
+.tbtn{font-size:7px;padding:2px 6px;border:0.5px solid var(--bd2);border-radius:3px;cursor:pointer;color:var(--t3);background:transparent;transition:all 0.12s;white-space:nowrap}
+.tbtn:hover{border-color:var(--gold);color:var(--gold)}
+.topic-body{display:none;padding:7px 10px;border-top:0.5px solid var(--bd);background:var(--bg2)}.topic-body.open{display:block}
+.topic-note{font-size:9px;color:var(--t2);padding:4px 0;border-bottom:0.5px solid var(--bd);line-height:1.5}.topic-note:last-child{border-bottom:none}
+.topic-note-meta{font-size:7px;color:var(--t3);margin-top:1px}
+.topic-link-item{font-size:9px;color:var(--gold);padding:4px 0;border-bottom:0.5px solid var(--bd);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
+.hn-item{padding:6px 0;border-bottom:0.5px solid var(--bd)}.hn-item:last-child{border-bottom:none}
+.hn-src{font-size:7px;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);display:flex;justify-content:space-between;margin-bottom:2px}
+.hn-hed{font-size:10px;color:var(--t1);line-height:1.4;cursor:pointer;font-family:var(--font-serif)}.hn-hed:hover{color:var(--gold)}
+.vocab-row{display:flex;align-items:center;gap:7px;background:var(--bg3);border:0.5px solid var(--bd2);border-radius:6px;padding:7px 9px;margin-bottom:5px}
+.vocab-text{flex:1;min-width:0}
+.vocab-word{font-family:var(--font-serif);font-size:12px;color:var(--gold)}
+.vocab-def{font-size:8px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vocab-more-btn{font-size:7px;padding:3px 8px;border:0.5px solid var(--bd2);cursor:pointer;background:transparent;color:var(--t3);border-radius:3px;white-space:nowrap;flex-shrink:0;transition:all 0.15s;text-transform:uppercase}
+.vocab-more-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sm-box{background:var(--bg3);border:0.5px solid var(--bd2);border-radius:6px;padding:7px 9px;margin-bottom:4px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:space-between;gap:7px}
+.sm-box:hover{border-color:var(--t3);background:var(--bg4)}
+.sm-box-title{font-size:10px;font-weight:500;color:var(--t1)}
+.sm-box-sub{font-size:8px;color:var(--t3);margin-top:1px}
+.sm-box-arrow{font-size:8px;color:var(--t3);flex-shrink:0}.sm-box:hover .sm-box-arrow{color:var(--gold)}
+.sp-card{background:var(--bg3);border:0.5px solid var(--bd2);border-radius:6px;padding:9px 10px;margin-bottom:5px}
+.sp-word{font-family:var(--font-serif);font-size:17px;color:var(--gold);margin:2px 0}
+.sp-hint{font-size:8px;color:var(--t3);margin-bottom:6px}
+.sp-btns{display:flex;gap:4px;flex-wrap:wrap}
+.sp-btn{font-size:8px;padding:4px 8px;border:0.5px solid var(--bd2);cursor:pointer;background:transparent;color:var(--t2);border-radius:4px;transition:all 0.15s}
+.sp-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sp-btn.correct{background:rgba(76,175,80,0.15);color:#4caf50;border-color:rgba(76,175,80,0.4)}
+.sp-btn.wrong{background:rgba(239,83,80,0.12);color:#ef5350;border-color:rgba(239,83,80,0.3)}
+.fin-box{background:var(--bg3);border:0.5px solid var(--bd2);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.15s}
+.fin-box:hover{border-color:var(--t3);background:var(--bg4)}
+.fin-box-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.fin-box-title{font-size:10px;font-weight:500;color:var(--t1)}
+.fin-box-total{font-family:var(--font-serif);font-size:13px;color:var(--gold);font-weight:500}
+.fin-box-sub{font-size:8px;color:var(--t3)}
+.pg-hd{padding:9px 14px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)}
+.pg-title{font-family:var(--font-serif);font-size:13px;color:var(--t1)}
+.fin-table{width:100%;border-collapse:collapse;font-size:10px}
+.fin-table th{font-size:7px;text-transform:uppercase;letter-spacing:0.07em;color:var(--t3);padding:4px 5px;border-bottom:0.5px solid var(--bd);text-align:left;font-weight:500}
+.fin-table td{padding:4px 5px;border-bottom:0.5px solid var(--bd);color:var(--t2);vertical-align:middle}
+.fin-table tr:last-child td{border-bottom:none}.fin-table tr:hover td{background:var(--bg3)}
+.cat-pill{font-size:7px;padding:1px 5px;border-radius:8px;font-weight:500}
+.cat-fixed{background:rgba(91,163,224,0.15);color:#5ba3e0}.cat-var{background:rgba(212,160,67,0.15);color:#d4a043}
+.amt{font-family:var(--font-serif);font-weight:500;color:var(--t1)}
+.del-x{font-size:8px;color:var(--t3);cursor:pointer;padding:1px 3px}.del-x:hover{color:#ef5350}
+.total-row td{font-weight:500;color:var(--gold);border-top:0.5px solid var(--bd2)!important;padding-top:7px}
+.prog-bar{height:4px;background:var(--bg4);border-radius:2px;margin-top:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px}
+.goal-card{border:0.5px solid var(--bd);border-radius:6px;padding:9px 10px;margin-bottom:5px;background:var(--bg2)}
+.saved-inv{padding:6px 9px;background:var(--bg3);border:0.5px solid var(--bd2);border-radius:5px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.saved-inv:hover{border-color:var(--gold)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:16px;z-index:200}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:0.5px solid var(--bd2);border-radius:10px;width:100%;max-width:430px;max-height:88vh;overflow-y:auto}
+.modal-hd{padding:11px 13px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:10px 10px 0 0;position:sticky;top:0}
+.modal-title{font-size:12px;font-weight:500;color:var(--t1)}
+.modal-x{font-size:17px;color:var(--t2);cursor:pointer;background:none;border:none;line-height:1}
+.modal-body{padding:12px 13px}
+.flbl{font-size:8px;text-transform:uppercase;letter-spacing:0.1em;color:var(--t3);margin-bottom:3px;margin-top:9px;display:block}.flbl:first-child{margin-top:0}
+.fi{width:100%;font-size:11px;background:var(--bg3);border:0.5px solid var(--bd2);color:var(--t1);padding:5px 7px;border-radius:5px;font-family:var(--font-sans)}
+.fi:focus{outline:none;border-color:var(--gold)}
+.fta{width:100%;font-size:11px;background:var(--bg3);border:0.5px solid var(--bd2);color:var(--t1);padding:5px 7px;border-radius:5px;resize:vertical;min-height:55px;line-height:1.5;font-family:var(--font-sans)}
+.fta:focus{outline:none;border-color:var(--gold)}
+.modal-footer{display:flex;gap:6px;padding:10px 13px;border-top:0.5px solid var(--bd);background:var(--bg3);border-radius:0 0 10px 10px}
+.bpri{font-size:8px;padding:5px 13px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:5px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase}
+.bsec{font-size:8px;padding:5px 9px;cursor:pointer;color:var(--t2);background:transparent;border:0.5px solid var(--bd2);border-radius:5px}
+.cal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;flex-direction:column;overflow-y:auto}
+.cal-overlay.open{display:flex}
+.cal-hdr{background:var(--bg2);padding:10px 16px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;flex-wrap:wrap;gap:7px}
+.cal-hdr-l{display:flex;align-items:center;gap:10px}
+.back-btn{font-size:7px;padding:4px 9px;border:0.5px solid var(--bd2);color:var(--t2);cursor:pointer;border-radius:3px;background:transparent;text-transform:uppercase}
+.back-btn:hover{border-color:var(--gold);color:var(--gold)}
+.cal-plat-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.cal-plat-name{font-family:var(--font-serif);font-size:15px;color:var(--t1)}
+.cal-plat-handle{font-size:7px;color:var(--t3);cursor:pointer;margin-top:1px}.cal-plat-handle:hover{color:var(--gold)}
+.cal-hdr-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.vtabs{display:flex}
+.vt{font-size:7px;padding:4px 9px;border:0.5px solid var(--bd2);cursor:pointer;color:var(--t3);background:var(--bg2);text-transform:uppercase}
+.vt:first-child{border-radius:3px 0 0 3px}.vt:last-child{border-radius:0 3px 3px 0;border-left:none}
+.vt.on{background:var(--gold);color:#000;border-color:var(--gold);font-weight:500}
+.wnav-grp{display:flex;align-items:center;gap:5px}
+.wnbtn{font-size:11px;padding:3px 7px;cursor:pointer;background:transparent;border:0.5px solid var(--bd2);color:var(--t2);border-radius:3px}
+.wnbtn:hover{border-color:var(--gold);color:var(--gold)}
+.wlbl{font-size:9px;color:var(--t2);min-width:108px;text-align:center}
+.new-post-btn{font-size:7px;padding:5px 11px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:3px;font-weight:500;text-transform:uppercase}
+.week-hd{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:0.5px solid var(--bd);background:var(--bg2);position:sticky;top:51px;z-index:5}
+.wghd{padding:6px 5px;text-align:center;border-right:0.5px solid var(--bd)}.wghd:last-child{border-right:none}
+.wghd-name{font-size:7px;text-transform:uppercase;color:var(--t3)}
+.wghd-num{font-size:14px;font-weight:400;color:var(--t2);margin-top:2px}.wghd-num.today-n{color:var(--gold);font-weight:500}
+.wday{border-right:0.5px solid var(--bd);padding:6px 5px;min-height:180px}.wday:last-child{border-right:none}
+.board-card{background:var(--bg3);border-radius:7px;padding:8px 9px;margin-bottom:5px;cursor:pointer;border:0.5px solid var(--bd2);transition:all 0.15s}
+.board-card:hover{border-color:var(--t3);background:var(--bg4)}
+.bc-type{font-size:7px;text-transform:uppercase;margin-bottom:3px;font-weight:500}
+.bc-title{font-size:9px;font-weight:500;color:var(--t1);line-height:1.35;margin-bottom:3px}
+.bc-copy{font-size:8px;color:var(--t3);line-height:1.4;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bc-pill{font-size:6px;padding:1px 5px;border-radius:8px;font-weight:500}
+.bc-time{font-size:7px;color:var(--t3)}
+.add-day-btn{border:0.5px dashed var(--bd2);border-radius:6px;padding:6px;text-align:center;cursor:pointer;color:var(--t4);font-size:9px;transition:all 0.15s;margin-top:3px}
+.add-day-btn:hover{border-color:var(--gold);color:var(--gold)}
+.month-cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.mhd-cell{padding:6px 4px;font-size:7px;text-transform:uppercase;color:var(--t3);text-align:center;border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);background:var(--bg2)}.mhd-cell:last-child{border-right:none}
+.mcell{border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);padding:5px;min-height:65px;cursor:pointer;transition:background 0.1s}.mcell:hover{background:var(--bg3)}.mcell.other-mo{opacity:0.25}
+.mcell.today-cell .mc-num{background:var(--gold);color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:500}
+.mc-num{font-size:9px;color:var(--t2);margin-bottom:3px;width:18px;text-align:center}
+.mc-dot{font-size:7px;padding:1px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;cursor:pointer}
+.pm-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;padding:16px;z-index:150}
+.pm-bg.open{display:flex}
+.pm-box{background:var(--bg2);border:0.5px solid var(--bd2);border-radius:10px;width:100%;max-width:490px;max-height:88vh;overflow-y:auto}
+.pm-hd{padding:10px 13px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:10px 10px 0 0;position:sticky;top:0}
+.pm-title{font-size:12px;font-weight:500;color:var(--t1)}
+.pm-x{font-size:17px;color:var(--t2);cursor:pointer;background:none;border:none;line-height:1}
+.pm-body{padding:12px 13px}
+.spills{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.spill{font-size:8px;padding:4px 9px;border-radius:20px;cursor:pointer;border:0.5px solid var(--bd2);color:var(--t3);transition:all 0.15s;font-weight:500}
+.spill.on{border-color:var(--gold);color:var(--gold);background:rgba(184,151,90,0.1)}
+.ai-box{background:var(--bg3);border-radius:7px;padding:9px;margin-top:9px;border:0.5px solid var(--bd)}
+.ai-lbl{font-size:7px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:500}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.ai-btn{font-size:7px;padding:5px 6px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;border-radius:5px;transition:all 0.15s;text-align:center;font-family:var(--font-sans)}
+.ai-btn:hover{border-color:var(--gold);color:var(--gold)}
+.copy-ok{font-size:8px;color:#4caf50;background:rgba(76,175,80,0.1);padding:5px 8px;border-radius:5px;margin-top:5px;display:none;border:0.5px solid rgba(76,175,80,0.3)}
+.copy-ok.show{display:block}
+.pm-footer{display:flex;gap:6px;padding:10px 13px;border-top:0.5px solid var(--bd);background:var(--bg3);border-radius:0 0 10px 10px;flex-wrap:wrap}
+.bcopy{font-size:8px;padding:5px 9px;cursor:pointer;color:#7b74dd;background:rgba(123,116,221,0.1);border:0.5px solid rgba(123,116,221,0.4);border-radius:5px}
+.bdel{font-size:8px;padding:5px 9px;cursor:pointer;color:#ef5350;background:transparent;border:0.5px solid var(--bd);border-radius:5px;margin-left:auto}
+.bdel:hover{border-color:#ef5350}
+.kanban-col{background:var(--bg);padding:10px}
+.kanban-card{background:var(--bg2);border:0.5px solid var(--bd2);border-radius:6px;padding:8px 9px;margin-bottom:5px;cursor:pointer;transition:all 0.15s}
+.kanban-card:hover{border-color:var(--t3)}
+button{font-family:var(--font-sans);font-size:8px;padding:4px 9px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;border-radius:4px;transition:all 0.15s}
+button:hover{border-color:var(--gold);color:var(--gold)}
+a{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+<!-- WORK DASHBOARD -->
+<div id="work-dash" class="dashboard active">
+<div class="topbar"><div class="tb-row">
+  <div style="padding-bottom:9px"><div class="brand-l1">The New Front Row</div><div class="brand-l2">NSJ MEDIA</div><div class="brand-l3">Command Center</div></div>
+  <div class="tb-right"><div class="clock" id="wct"></div><div class="dateline" id="wcd"></div><div class="greet" id="wgreet"></div>
+    <div class="tb-btns"><button class="tog" onclick="switchDash('personal')">Personal &#8599;</button><button class="tog gold" onclick="window.open('https://natashasilvajelly.substack.com','_blank')">Substack &#8599;</button></div>
+  </div>
+</div></div>
+<div class="gold-bar"></div>
+<div class="top-nav" id="work-nav">
+  <div class="tnav on" onclick="showWPage('w-dashboard',this)">Dashboard</div>
+  <div class="tnav" onclick="showWPage('w-allposts',this)">All posts</div>
+  <div class="tnav" onclick="showWPage('w-ideas',this)">Ideas vault</div>
+  <div class="tnav" onclick="showWPage('w-partners',this)">Partnerships</div>
+  <div class="tnav" onclick="showWPage('w-pitches',this)">Media pitches</div>
+  <div class="tnav" onclick="showWPage('w-branding',this)">Branding</div>
+  <div class="tnav" onclick="showWPage('w-strategy',this)">Strategy</div>
+</div>
+<div id="w-dashboard" class="page on"><div class="dash-grid">
+  <div class="col"><div class="col-hd"><span class="col-label">Content channels</span><span class="col-act" onclick="openNewPost(null,null)">+ new post</span></div><div class="col-cards"><div class="cards-grid" id="cards-grid"></div></div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">News feed</span><span class="col-act" onclick="alert('Ask Claude to refresh news feed')">refresh &#8599;</span></div>
+  <div class="col-scroll">
+    <div class="news-item"><div class="ni-src"><span>Vogue</span><a href="https://www.vogue.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Vogue quiet luxury evolving — 3 content angles for The New Front Row')">Quiet luxury is not dead — it has evolved</div></div>
+    <div class="news-item"><div class="ni-src"><span>The Cut</span><a href="https://www.thecut.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: The Cut personal style in your 30s — opinion piece for The New Front Row')">What your 30s teach you about personal style</div></div>
+    <div class="news-item"><div class="ni-src"><span>Harpers Bazaar</span><a href="https://www.harpersbazaar.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Bazaar editors summer buys — ShopMy curation for The New Front Row')">The pieces editors are actually buying</div></div>
+    <div class="news-item"><div class="ni-src"><span>NYT Style</span><a href="https://www.nytimes.com/spotlight/lifestyle" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: NYT Style resort dressing — contrarian New Front Row take')">The new resort dressing is decidedly un-resort</div></div>
+    <div class="news-item"><div class="ni-src"><span>Stylist</span><a href="https://www.stylist.co.uk/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Stylist fashion story — content angle for The New Front Row')">The styling trick that changes everything</div></div>
+    <div class="news-item"><div class="ni-src"><span>Who What Wear</span><a href="https://www.whowhatwear.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Who What Wear trend story — The New Front Row angle')">The trend nobody saw coming this season</div></div>
+    <div class="news-item"><div class="ni-src"><span>Into The Gloss</span><a href="https://intothegloss.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Into The Gloss beauty story — beauty angle for The New Front Row')">The skincare routine that changed everything</div></div>
+    <div class="news-item"><div class="ni-src"><span>Allure</span><a href="https://www.allure.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Allure beauty story — The New Front Row beauty angle')">The beauty products worth every penny</div></div>
+    <div class="news-item"><div class="ni-src"><span>Business of Fashion</span><a href="https://www.businessoffashion.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: BoF creator economy — LinkedIn post for The New Front Row')">Why the creator economy is fragmenting</div></div>
+    <div class="news-item"><div class="ni-src"><span>Goop</span><a href="https://goop.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="ni-hed" onclick="alert('Ask Claude: Goop wellness story — NSJ Life angle for The New Front Row')">The wellness habit that actually works</div></div>
+    <div class="nadd" style="margin-top:5px">+ manage sources &#8599;</div>
+  </div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">Trend radar</span><span class="col-act" onclick="alert('Ask Claude: Full trend refresh for The New Front Row — top 10 trending topics across TikTok, Substack, Instagram, Wikipedia, Google Trends, Shopping')">refresh &#8599;</span></div>
+  <div class="col-scroll">
+    <div class="rtabs" id="rtabs"><div class="rtab on" onclick="switchRadar('all',this)">All</div><div class="rtab" onclick="switchRadar('tiktok',this)">TikTok</div><div class="rtab" onclick="switchRadar('substack',this)">Substack</div><div class="rtab" onclick="switchRadar('shopping',this)">Shopping</div><div class="rtab" onclick="switchRadar('wiki',this)">Wiki</div></div>
+    <div id="radar-list"></div>
+    <div class="nadd" style="margin-top:5px" onclick="alert('Ask Claude: Pull todays top 10 trends for The New Front Row across TikTok, Substack, Instagram, Wikipedia, Google Discover, Shopping')">pull today top 10 &#8599;</div>
+    <div class="sep"></div><div class="slabel">Post today</div>
+    <div class="trend-row" onclick="alert('Ask Claude: Write a Substack Note on Office Siren for The New Front Row — under 150 words, direct, opinionated')"><span class="tnum">1</span><div style="flex:1"><div class="tkw">Substack Note · Office Siren</div><div class="tvol">Quick take · 150 words</div></div></div>
+    <div class="trend-row" onclick="alert('Ask Claude: Instagram caption for The New Front Row — return of maximalism, bold NYC insider voice')"><span class="tnum">2</span><div style="flex:1"><div class="tkw">IG · Maximalism is back</div><div class="tvol">Single post · bold voice</div></div></div>
+    <div class="trend-row" onclick="alert('Ask Claude: TikTok hook and script — quiet luxury vs loud fashion, under 45 seconds')"><span class="tnum">3</span><div style="flex:1"><div class="tkw">TikTok · Quiet vs Loud</div><div class="tvol">45 second script</div></div></div>
+  </div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">Organisation</span></div><div class="col-scroll">
+    <div class="mnav"><span class="month-lbl" id="wmonth-lbl"></span><div style="display:flex;gap:3px"><button class="mnav-btn" onclick="changeWMonth(-1)">&#8249;</button><button class="mnav-btn" onclick="changeWMonth(1)">&#8250;</button><button class="mnav-btn" style="font-size:6px;padding:2px 4px" onclick="goWToday()">Today</button></div></div>
+    <div class="month-grid" id="wmonth-cal"></div>
+    <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap"><a class="nadd" href="https://calendar.google.com" target="_blank">Google Cal &#8599;</a><a class="nadd" href="https://zoom.us" target="_blank">Zoom &#8599;</a><a class="nadd" href="https://slack.com" target="_blank">Slack &#8599;</a></div>
+    <div class="sep"></div><div class="slabel">Work to-do</div><div id="work-todos"></div><div class="nadd" onclick="addWorkTodo()">+ add task</div>
+    <div class="sep"></div><div class="slabel">Quick actions</div><div id="work-qa"></div><div class="nadd" onclick="addWorkQA()">+ add action</div>
+  </div></div>
+</div></div>
+<div id="w-allposts" class="page"><div class="pg-hd"><span class="pg-title">All posts · kanban</span><button onclick="openNewPost(null,null)">+ New post</button></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd)" id="kanban-board"></div></div>
+<div id="w-ideas" class="page">
+  <div class="pg-hd"><span class="pg-title">Content ideas vault</span><div style="display:flex;gap:7px"><button onclick="alert('Ask Claude: Generate 10 new content ideas for The New Front Row')">generate &#8599;</button><button onclick="addIdea()">+ add idea</button></div></div>
+  <div style="display:flex;border-bottom:0.5px solid var(--bd);background:var(--bg2)" id="idea-tabs"><div class="tnav on" onclick="filterIdeas('all',this)">All</div><div class="tnav" onclick="filterIdeas('Style',this)">Style</div><div class="tnav" onclick="filterIdeas('Beauty',this)">Beauty</div><div class="tnav" onclick="filterIdeas('Shopping',this)">Shopping</div><div class="tnav" onclick="filterIdeas('NSJ Unfiltered',this)">NSJ Unfiltered</div><div class="tnav" onclick="filterIdeas('NSJ in NYC',this)">NSJ in NYC</div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;padding:12px" id="ideas-grid"></div>
+</div>
+<div id="w-partners" class="page"><div class="pg-hd"><span class="pg-title">Brand partners</span><div style="display:flex;gap:7px"><button onclick="alert('Ask Claude: Suggest 15 ideal brand partners for The New Front Row')">find &#8599;</button><button onclick="addPartner()">+ add</button></div></div><div id="partners-list"></div></div>
+<div id="w-pitches" class="page"><div class="pg-hd"><span class="pg-title">Media pitches</span><div style="display:flex;gap:7px"><button onclick="alert('Ask Claude: Write a media pitch for The New Front Row')">draft &#8599;</button><button onclick="addPitch()">+ add</button></div></div><div id="pitches-list"></div></div>
+<div id="w-branding" class="page"><div class="pg-hd"><span class="pg-title">Branding · The New Front Row</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;padding:12px">
+    <div class="fin-box" onclick="alert('Ask Claude: Write a comprehensive tone of voice guide for The New Front Row')"><div class="fin-box-title">Tone of voice</div><div class="fin-box-sub" style="margin-top:4px">Brand personality, writing style</div></div>
+    <div class="fin-box" onclick="alert('Ask Claude: Define The New Front Row visual identity')"><div class="fin-box-title">Visual identity</div><div class="fin-box-sub" style="margin-top:4px">Colours, typography, photography</div></div>
+    <div class="fin-box" onclick="alert('Ask Claude: Create a Substack design brief for The New Front Row')"><div class="fin-box-title">Substack templates</div><div class="fin-box-sub" style="margin-top:4px">Header, newsletter layout</div></div>
+    <div class="fin-box" onclick="alert('Ask Claude: Write a logo brief for The New Front Row')"><div class="fin-box-title">Logo brief</div><div class="fin-box-sub" style="margin-top:4px">Wordmark, icon, format specs</div></div>
+    <div class="fin-box" onclick="alert('Ask Claude: Social media template briefs for The New Front Row')"><div class="fin-box-title">Social templates</div><div class="fin-box-sub" style="margin-top:4px">IG, Stories, TikTok, LinkedIn</div></div>
+    <div class="fin-box" onclick="alert('Ask Claude: Write The New Front Row brand strategy')"><div class="fin-box-title">Brand strategy</div><div class="fin-box-sub" style="margin-top:4px">Positioning, audience, pillars</div></div>
+  </div>
+</div>
+<div id="w-strategy" class="page"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd)">
+  <div style="background:var(--bg);padding:14px"><div style="font-family:var(--font-serif);font-size:13px;color:var(--gold);margin-bottom:9px">Publishing blueprint</div><div style="font-size:10px;color:var(--t2);line-height:2">Mon — Substack article<br>Wed — Repurposed<br>Fri — Newsletter<br>Daily — 4x Notes<br>Daily — 1-2x per platform</div><div class="nadd" style="margin-top:8px" onclick="alert('Ask Claude: Build a 90-day publishing plan for The New Front Row to reach 5,000 subscribers')">90-day plan &#8599;</div></div>
+  <div style="background:var(--bg);padding:14px"><div style="font-family:var(--font-serif);font-size:13px;color:var(--gold);margin-bottom:9px">Growth milestones</div><div style="font-size:10px;color:var(--t2);line-height:2">Q2 2026 — Launch, 1K<br>Q3 2026 — 5K, paid tier<br>Q4 2026 — 10K, brand deals<br>2027 — 25K+, monetisation</div><div class="nadd" style="margin-top:8px" onclick="alert('Ask Claude: Full monetisation strategy for The New Front Row')">monetisation plan &#8599;</div></div>
+  <div style="background:var(--bg);padding:14px;grid-column:1/-1"><div style="font-family:var(--font-serif);font-size:13px;color:var(--gold);margin-bottom:9px">Specialist agents</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:5px">
+      <button onclick="alert('Ask Claude: You are The New Front Row voice agent. Write in Natashas voice: sophisticated, direct, NYC fashion insider')">NFR voice &#8599;</button>
+      <button onclick="alert('Ask Claude: NSJ Media — give me this weeks top 3 priorities')">Strategy &#8599;</button>
+      <button onclick="alert('Ask Claude: List commissioning editors at Vogue, The Cut, NYT Style, Harpers Bazaar')">Editors list &#8599;</button>
+      <button onclick="alert('Ask Claude: Media conferences in 2026 for a fashion lifestyle Substack creator')">Conferences &#8599;</button>
+      <button onclick="alert('Ask Claude: Create an invoice template for NSJ Media brand deals')">Invoice &#8599;</button>
+      <button onclick="alert('Ask Claude: Tax checklist for a self-employed US media creator')">Tax checklist &#8599;</button>
+    </div>
+  </div>
+</div></div>
+</div>
+<!-- CALENDAR OVERLAY -->
+<div class="cal-overlay" id="cal-overlay">
+<div class="cal-hdr"><div class="cal-hdr-l"><button class="back-btn" onclick="closeCalOverlay()">&#8592; Back</button><div style="display:flex;align-items:center;gap:8px"><div class="cal-plat-icon" id="cal-icon"></div><div><div class="cal-plat-name" id="cal-name"></div><div class="cal-plat-handle" id="cal-handle" onclick="openActivePlatLink()"></div></div></div></div>
+<div class="cal-hdr-r"><div class="wnav-grp"><button class="wnbtn" onclick="calChangeWeek(-1)">&#8249;</button><span class="wlbl" id="cal-week-lbl"></span><button class="wnbtn" onclick="calChangeWeek(1)">&#8250;</button><button class="wnbtn" onclick="calGoToday()" style="font-size:7px;padding:3px 6px">Today</button></div>
+<div class="vtabs"><div class="vt on" onclick="setCalMode('week',this)">Week</div><div class="vt" onclick="setCalMode('month',this)">Month</div><div class="vt" onclick="setCalMode('day',this)">Day</div></div>
+<button class="new-post-btn" onclick="openNewPost(W.activePlatId,null)">+ New post</button></div></div>
+<div id="cal-body" style="flex:1"></div>
+</div>
+<!-- POST MODAL -->
+<div class="pm-bg" id="pm-bg" onclick="closePM(event)"><div class="pm-box" onclick="event.stopPropagation()">
+<div class="pm-hd"><div style="display:flex;align-items:center;gap:7px"><div class="cal-plat-icon" id="pm-icon" style="width:22px;height:22px;border-radius:5px"></div><div><div class="pm-title" id="pm-title-hd">New post</div><div style="font-size:7px;color:var(--t3)" id="pm-sub"></div></div></div><button class="pm-x" onclick="closePM()">&#215;</button></div>
+<div class="pm-body">
+<span class="flbl">Platform</span><select class="fi" id="pm-platform" onchange="updatePMPlat()"><option value="substack">Substack</option><option value="ig">Instagram</option><option value="fb">Facebook</option><option value="threads">Threads</option><option value="linkedin">LinkedIn</option><option value="twitter">Twitter / X</option><option value="bluesky">Bluesky</option><option value="pinterest">Pinterest</option><option value="tiktok">TikTok</option><option value="shopmy">ShopMy</option></select>
+<span class="flbl">Content type</span><select class="fi" id="pm-type"><option>Post</option><option>Article</option><option>Note</option><option>Newsletter</option><option>Reel</option><option>Story</option><option>Video</option><option>Thread</option><option>Link / Product</option></select>
+<span class="flbl">Title / headline / hook</span><input class="fi" id="pm-post-title" type="text" placeholder="What is this post about?">
+<span class="flbl">Copy / caption</span><textarea class="fta" id="pm-copy" placeholder="Write your copy here..."></textarea>
+<span class="flbl">Hashtags</span><input class="fi" id="pm-tags" type="text" placeholder="#fashion #style #TheNewFrontRow">
+<span class="flbl">Link</span><input class="fi" id="pm-link" type="text" placeholder="https://...">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><span class="flbl">Date</span><input class="fi" id="pm-date" type="date"></div><div><span class="flbl">Time</span><input class="fi" id="pm-time" type="time"></div></div>
+<span class="flbl">Status</span><div class="spills" id="pm-spills"><span class="spill on" onclick="setSt(this,'draft')">Draft</span><span class="spill" onclick="setSt(this,'ready')">Ready</span><span class="spill" onclick="setSt(this,'scheduled')">Scheduled</span><span class="spill" onclick="setSt(this,'published')">Published</span></div>
+<span class="flbl">Notes</span><textarea class="fta" id="pm-notes" placeholder="Internal notes..." style="min-height:36px"></textarea>
+<div class="ai-box"><div class="ai-lbl">AI writing tools — copy prompt and paste into Claude chat</div><div class="ai-grid">
+<button class="ai-btn" onclick="copyAIPrompt('write')">Write for me &#8599;</button><button class="ai-btn" onclick="copyAIPrompt('rewrite')">Rewrite &#8599;</button><button class="ai-btn" onclick="copyAIPrompt('shorter')">Shorter &#8599;</button>
+<button class="ai-btn" onclick="copyAIPrompt('hooks')">5 hooks &#8599;</button><button class="ai-btn" onclick="copyAIPrompt('repurpose')">Repurpose all &#8599;</button><button class="ai-btn" onclick="copyAIPrompt('hashtags')">Hashtags &#8599;</button>
+</div></div>
+<div class="copy-ok" id="pm-copy-ok">Prompt copied to clipboard</div>
+</div>
+<div class="pm-footer"><button class="bpri" onclick="savePost()">Save post</button><button class="bcopy" onclick="copyAndOpen()">Copy + Open &#8599;</button><button class="bsec" onclick="closePM()">Cancel</button><button class="bdel" id="pm-del" style="display:none" onclick="deletePost()">Delete</button></div>
+</div></div>
+<!-- PERSONAL DASHBOARD -->
+<div id="personal-dash" class="dashboard">
+<div class="topbar"><div class="tb-row">
+  <div style="padding-bottom:9px"><div class="brand-l1">NSJ Life</div><div class="brand-l2">PERSONAL</div><div class="brand-l3">Command Center</div></div>
+  <div class="tb-right"><div class="clock" id="pct"></div><div class="dateline" id="pcd"></div><div class="greet" id="pgreet"></div><div class="tb-btns"><button class="tog" onclick="switchDash('work')">Work &#8599;</button></div></div>
+</div></div>
+<div class="gold-bar"></div>
+<div class="top-nav" id="personal-nav">
+  <div class="tnav on" onclick="showPPage('p-dashboard',this)">Dashboard</div>
+  <div class="tnav" onclick="showPPage('p-finances',this)">Finances</div>
+  <div class="tnav" onclick="showPPage('p-development',this)">Development</div>
+  <div class="tnav" onclick="showPPage('p-spanish',this)">Spanish</div>
+  <div class="tnav" onclick="showPPage('p-goals',this)">Goals</div>
+</div>
+<div id="p-dashboard" class="page on"><div class="p-dash-grid">
+  <div class="col"><div class="col-hd"><span class="col-label">Organisation</span></div><div class="p-col-scroll">
+    <div class="mnav"><span class="month-lbl" id="pmonth-lbl"></span><div style="display:flex;gap:3px"><button class="mnav-btn" onclick="changePMonth(-1)">&#8249;</button><button class="mnav-btn" onclick="changePMonth(1)">&#8250;</button><button class="mnav-btn" style="font-size:6px;padding:2px 4px" onclick="goPToday()">Today</button></div></div>
+    <div class="month-grid" id="pmonth-cal"></div>
+    <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap"><a class="nadd" href="https://calendar.google.com" target="_blank">Google Cal &#8599;</a><a class="nadd" href="https://zoom.us" target="_blank">Zoom &#8599;</a><a class="nadd" href="https://slack.com" target="_blank">Slack &#8599;</a></div>
+    <div class="sep"></div><div class="slabel">Personal to-do</div><div id="life-todos"></div><div class="nadd" onclick="addTodo()">+ add task</div>
+    <div class="sep"></div><div class="slabel">Quick actions</div><div id="qa-org"></div><div class="nadd" onclick="addQA('org')">+ add action</div>
+  </div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">Health</span><span class="col-act" onclick="alert('Ask Claude: Quick health briefing — latest expert insights across longevity, fitness and headspace')">refresh &#8599;</span></div><div class="p-col-scroll">
+    <div class="slabel">Topics</div>
+    <div class="topic-panel"><div class="topic-hd" onclick="toggleTopic('longevity')"><span class="topic-title">Longevity</span><div class="topic-actions"><button class="tbtn" onclick="event.stopPropagation();alert('Ask Claude: Latest longevity science — Peter Attia, David Sinclair, Bryan Johnson. Key dietary protocols, habits proven to extend healthspan, and one practical change I can make this week')">Feed &#8599;</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('longevity','note')">+ Note</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('longevity','link')">+ Link</button></div></div><div class="topic-body" id="tb-longevity"><div style="font-size:8px;color:var(--t3);padding:5px 0">No notes yet. Click Feed for expert insights.</div></div></div>
+    <div class="topic-panel"><div class="topic-hd" onclick="toggleTopic('fitness')"><span class="topic-title">Fitness</span><div class="topic-actions"><button class="tbtn" onclick="event.stopPropagation();alert('Ask Claude: Practical fitness briefing — optimal workout types for a busy professional woman and one workout I can do today in under 30 minutes')">Feed &#8599;</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('fitness','note')">+ Note</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('fitness','link')">+ Link</button></div></div><div class="topic-body" id="tb-fitness"><div style="font-size:8px;color:var(--t3);padding:5px 0">No notes yet. Click Feed for workouts and protocols.</div></div></div>
+    <div class="topic-panel"><div class="topic-hd" onclick="toggleTopic('headspace')"><span class="topic-title">Headspace</span><div class="topic-actions"><button class="tbtn" onclick="event.stopPropagation();alert('Ask Claude: Headspace briefing — neuroscience-backed focus habits, managing creative burnout, mindfulness practices and one technique to try today')">Feed &#8599;</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('headspace','note')">+ Note</button><button class="tbtn" onclick="event.stopPropagation();openTopicModal('headspace','link')">+ Link</button></div></div><div class="topic-body" id="tb-headspace"><div style="font-size:8px;color:var(--t3);padding:5px 0">No notes yet. Click Feed for mindfulness practices.</div></div></div>
+    <div id="extra-health"></div><div class="nadd" onclick="addHealthTopic()" style="margin-top:4px">+ add topic</div>
+    <div class="sep"></div><div class="slabel">Health news</div>
+    <div class="hn-item"><div class="hn-src"><span>NYT Well</span><a href="https://www.nytimes.com/section/well" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Top 3 health stories from NYT Well this week with one actionable takeaway each')">Latest from NYT Well &#8599;</div></div>
+    <div class="hn-item"><div class="hn-src"><span>Well + Good</span><a href="https://www.wellandgood.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Top wellness trends from Well and Good this week')">Latest from Well + Good &#8599;</div></div>
+    <div class="hn-item"><div class="hn-src"><span>MindBodyGreen</span><a href="https://www.mindbodygreen.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Top nutrition, fitness and mental wellness from MindBodyGreen this week')">Latest from MindBodyGreen &#8599;</div></div>
+    <div class="hn-item"><div class="hn-src"><span>Womens Health</span><a href="https://www.womenshealthmag.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Top health and fitness stories from Womens Health this week')">Latest from Womens Health &#8599;</div></div>
+    <div class="hn-item"><div class="hn-src"><span>Verywell Mind</span><a href="https://www.verywellmind.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Top mental health stories from Verywell Mind this week')">Latest from Verywell Mind &#8599;</div></div>
+    <div class="hn-item"><div class="hn-src"><span>Psychology Today</span><a href="https://www.psychologytoday.com/" target="_blank" style="font-size:7px;color:var(--gold)">open &#8599;</a></div><div class="hn-hed" onclick="alert('Ask Claude: Most interesting psychology stories from Psychology Today this week')">Latest from Psychology Today &#8599;</div></div>
+  </div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">Education</span><span class="col-act" onclick="alert('Ask Claude: Refresh my education feed — one fascinating insight each from philosophy, politics, history, science, culture, art and design, fashion')">refresh &#8599;</span></div><div class="p-col-scroll">
+    <div class="slabel">Vocab</div>
+    <div class="vocab-row"><div class="vocab-text"><div class="vocab-word" id="v-word"></div><div class="vocab-def" id="v-def"></div></div><button class="vocab-more-btn" onclick="openVocabMore()">More &#8599;</button></div>
+    <div class="sep"></div><div class="slabel">Level Up</div><div id="levelup-grid"></div><div class="nadd" onclick="addLevelUp()" style="margin-top:4px">+ add topic</div>
+    <div class="sep"></div><div class="slabel">Spanish · daily card</div>
+    <div class="sp-card">
+      <div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-bottom:2px" id="sp-cat">Vocabulary</div>
+      <div class="sp-word" id="sp-word"></div><div class="sp-hint" id="sp-hint"></div>
+      <div style="display:none;font-size:10px;color:var(--gold);margin:3px 0" id="sp-reveal"></div>
+      <div class="sp-btns" id="sp-btns"></div><div style="font-size:8px;color:var(--t3);margin-top:3px" id="sp-score"></div>
+    </div>
+    <div style="display:flex;gap:5px"><button onclick="nextSp1()">Next &#8599;</button><button onclick="showPPage('p-spanish',document.querySelector('#personal-nav .tnav:nth-child(4)'))">Full Spanish &#8599;</button></div>
+  </div></div>
+  <div class="col"><div class="col-hd"><span class="col-label">Finances</span><span class="col-act" onclick="showPPage('p-finances',document.querySelector('#personal-nav .tnav:nth-child(2)'))">full view &#8599;</span></div><div class="p-col-scroll">
+    <div class="fin-box" onclick="showPPage('p-finances',document.querySelector('#personal-nav .tnav:nth-child(2)'))"><div class="fin-box-hd"><span class="fin-box-title">Monthly expenses</span><span style="font-size:8px;color:var(--t3)">&#8599;</span></div><div class="fin-box-total" id="exp-snap-total">$0</div><div class="fin-box-sub" id="exp-snap-sub">0 items</div></div>
+    <div class="fin-box" onclick="showPPage('p-finances',document.querySelector('#personal-nav .tnav:nth-child(2)'))"><div class="fin-box-hd"><span class="fin-box-title">Debts</span><span style="font-size:8px;color:var(--t3)">&#8599;</span></div><div class="fin-box-total" id="debt-snap-total">$0</div><div class="fin-box-sub" id="debt-snap-sub">0 debts</div></div>
+    <div class="fin-box" onclick="showPPage('p-goals',document.querySelector('#personal-nav .tnav:nth-child(5)'))"><div class="fin-box-hd"><span class="fin-box-title">Goals 2026</span><span style="font-size:8px;color:var(--t3)">&#8599;</span></div><div class="fin-box-total" id="goals-snap-val">&#8212;</div><div class="fin-box-sub" id="goals-snap-sub">view all</div></div>
+    <div class="fin-box" onclick="showPPage('p-finances',document.querySelector('#personal-nav .tnav:nth-child(2)'))"><div class="fin-box-hd"><span class="fin-box-title">Invoices</span><span style="font-size:8px;color:var(--t3)">&#8599;</span></div><div class="fin-box-total" id="inv-snap-total">$0</div><div class="fin-box-sub" id="inv-snap-sub">0 invoices</div></div>
+    <div class="sep"></div><div class="slabel">Quick actions</div><div id="qa-fin"></div><div class="nadd" onclick="addQA('fin')">+ add action</div>
+  </div></div>
+</div></div>
+<div id="p-finances" class="page"><div class="pg-hd"><span class="pg-title">Finances</span><div style="display:flex;gap:7px"><button onclick="openPModal('expense')">+ add expense</button><button onclick="openPModal('debt')">+ add debt</button><button onclick="openPModal('invoice')">+ create invoice</button></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd)">
+    <div style="background:var(--bg);padding:13px"><div style="font-size:8px;font-weight:500;text-transform:uppercase;color:var(--t2);margin-bottom:9px;padding-bottom:6px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between">Monthly expenses<span style="font-size:7px;color:var(--gold);cursor:pointer" onclick="openPModal('expense')">+ add</span></div><table class="fin-table"><thead><tr><th>Item</th><th>Category</th><th>Amount</th><th></th></tr></thead><tbody id="exp-full"></tbody><tfoot><tr class="total-row"><td colspan="2">Total</td><td id="exp-full-total" class="amt">$0</td><td></td></tr></tfoot></table></div>
+    <div style="background:var(--bg);padding:13px"><div style="font-size:8px;font-weight:500;text-transform:uppercase;color:var(--t2);margin-bottom:9px;padding-bottom:6px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between">Debts<span style="font-size:7px;color:var(--gold);cursor:pointer" onclick="openPModal('debt')">+ add</span></div><table class="fin-table"><thead><tr><th>Debt</th><th>Balance</th><th>Monthly</th><th></th></tr></thead><tbody id="debt-full"></tbody><tfoot><tr class="total-row"><td>Total</td><td id="debt-bal" class="amt">$0</td><td id="debt-mo" class="amt">$0</td><td></td></tr></tfoot></table></div>
+  </div>
+  <div style="padding:13px;border-top:0.5px solid var(--bd)"><div style="font-size:8px;font-weight:500;text-transform:uppercase;color:var(--t2);margin-bottom:9px;display:flex;align-items:center;justify-content:space-between">Invoices<span style="font-size:7px;color:var(--gold);cursor:pointer" onclick="openPModal('invoice')">+ create</span></div><div id="inv-list"><div style="font-size:10px;color:var(--t3)">No invoices yet.</div></div></div>
+</div>
+<div id="p-development" class="page"><div class="pg-hd"><span class="pg-title">Development</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--bd)">
+    <div style="background:var(--bg);padding:13px"><div class="slabel" style="margin-bottom:7px">Reading list</div><div id="book-list"></div><div class="nadd" onclick="openPModal('book')" style="margin-top:5px">+ add book</div><div class="sep"></div><div class="slabel" style="margin-bottom:7px">Topics to explore</div><div id="learn-list"></div><div class="nadd" onclick="openPModal('learn')" style="margin-top:5px">+ add topic</div></div>
+    <div style="background:var(--bg);padding:13px"><div class="slabel" style="margin-bottom:7px">Level Up</div><div id="levelup-full"></div><div class="nadd" onclick="addLevelUp()" style="margin-top:4px">+ add topic</div></div>
+    <div style="background:var(--bg);padding:13px"><div class="slabel" style="margin-bottom:7px">Health topics</div>
+      <div class="sm-box" onclick="alert('Ask Claude: Latest longevity science')"><div><div class="sm-box-title">Longevity</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Latest fitness insights for a busy professional woman')"><div><div class="sm-box-title">Fitness</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Latest headspace and mindfulness insights')"><div><div class="sm-box-title">Headspace</div></div><span class="sm-box-arrow">&#8599;</span></div>
+    </div>
+  </div>
+</div>
+<div id="p-spanish" class="page"><div class="pg-hd"><span class="pg-title">Spanish · Aprende conmigo</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd)">
+    <div style="background:var(--bg);padding:13px">
+      <div class="slabel" style="margin-bottom:7px">Daily flashcards</div>
+      <div class="sp-card"><div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-bottom:2px" id="sp2-cat">Vocabulary</div><div class="sp-word" id="sp2-word"></div><div class="sp-hint" id="sp2-hint"></div><div style="display:none;font-size:12px;color:var(--gold);margin:4px 0" id="sp2-reveal"></div><div class="sp-btns" id="sp2-btns"></div><div style="font-size:8px;color:var(--t3);margin-top:4px" id="sp2-score"></div></div>
+      <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap"><button onclick="nextSp2()">Next &#8599;</button><button onclick="alert('Ask Claude: Spanish fashion and lifestyle vocabulary — 10 words with pronunciation and cultural context')">Fashion vocab &#8599;</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px">
+        <div style="background:var(--bg3);border:0.5px solid var(--bd);border-radius:5px;padding:6px 7px"><div style="font-size:13px;font-weight:500;color:var(--t1);font-family:var(--font-serif)" id="sp2-streak">0</div><div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-top:1px">Streak</div></div>
+        <div style="background:var(--bg3);border:0.5px solid var(--bd);border-radius:5px;padding:6px 7px"><div style="font-size:13px;font-weight:500;color:var(--t1);font-family:var(--font-serif)" id="sp2-correct">0</div><div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-top:1px">Correct</div></div>
+        <div style="background:var(--bg3);border:0.5px solid var(--bd);border-radius:5px;padding:6px 7px"><div style="font-size:13px;font-weight:500;color:var(--t1);font-family:var(--font-serif)" id="sp2-total">0</div><div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-top:1px">Cards</div></div>
+        <div style="background:var(--bg3);border:0.5px solid var(--bd);border-radius:5px;padding:6px 7px"><div style="font-size:13px;font-weight:500;color:var(--t1);font-family:var(--font-serif)">A2</div><div style="font-size:7px;text-transform:uppercase;color:var(--t3);margin-top:1px">Level</div></div>
+      </div>
+    </div>
+    <div style="background:var(--bg);padding:13px">
+      <div class="slabel" style="margin-bottom:7px">Phrase of the day</div>
+      <div style="background:var(--bg3);border:0.5px solid var(--bd2);border-radius:8px;padding:11px;margin-bottom:11px"><div id="sp2-phrase" style="font-family:var(--font-serif);font-size:14px;color:var(--gold);margin-bottom:3px"></div><div id="sp2-phrase-en" style="font-size:9px;color:var(--t3)"></div></div>
+      <div class="slabel" style="margin-bottom:7px">Study topics</div>
+      <div class="sm-box" onclick="alert('Ask Claude: Teach me Spanish present tense verbs with 10 examples and phonetic pronunciation')"><div><div class="sm-box-title">Present tense verbs</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Spanish for shopping and fashion — 20 key phrases with pronunciation')"><div><div class="sm-box-title">Shopping + fashion</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Explain ser vs estar with fashion and lifestyle examples')"><div><div class="sm-box-title">Ser vs estar</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Give me 15 Spanish phrases that make you sound fluent immediately')"><div><div class="sm-box-title">Sound fluent fast</div></div><span class="sm-box-arrow">&#8599;</span></div>
+      <div class="sm-box" onclick="alert('Ask Claude: Spanish for parenting — phrases for nannies, school parents and helping children')"><div><div class="sm-box-title">Parenting Spanish</div></div><span class="sm-box-arrow">&#8599;</span></div>
+    </div>
+  </div>
+</div>
+<div id="p-goals" class="page"><div class="pg-hd"><span class="pg-title">Goals 2026</span><div style="display:flex;gap:7px"><button onclick="openPModal('goal')">+ add goal</button><button onclick="alert('Ask Claude: Help me set meaningful 2026 goals — ask me what matters most')">build plan &#8599;</button></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;padding:13px" id="goals-grid"></div></div>
+</div>
+<!-- PERSONAL MODAL -->
+<div class="modal-bg" id="p-modal-bg" onclick="closePMod(event)"><div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-hd"><span class="modal-title" id="p-mod-title">Add</span><button class="modal-x" onclick="closePMod()">&#215;</button></div>
+  <div class="modal-body" id="p-mod-body"></div>
+  <div class="modal-footer" id="p-mod-footer"><button class="bpri" id="p-mod-save">Save</button><button class="bsec" onclick="closePMod()">Cancel</button></div>
+</div></div>
+<script>
+var PLATS=[
+  {id:"substack",name:"Substack",handle:"natashasilvajelly.substack.com",url:"https://natashasilvajelly.substack.com",color:"#7b74dd",bg:"rgba(123,116,221,0.2)"},
+  {id:"ig",name:"Instagram",handle:"@nsjlifeandstyle",url:"https://www.instagram.com/nsjlifeandstyle/",color:"#e87aaa",bg:"rgba(232,122,170,0.2)"},
+  {id:"fb",name:"Facebook",handle:"natasha.silvajelly",url:"https://www.facebook.com/natasha.silvajelly",color:"#5ba3e0",bg:"rgba(91,163,224,0.2)"},
+  {id:"threads",name:"Threads",handle:"@natashasilvajelly",url:"https://www.threads.com/@natashasilvajelly",color:"#a78bfa",bg:"rgba(167,139,250,0.2)"},
+  {id:"linkedin",name:"LinkedIn",handle:"natasha-silva-jelly",url:"https://www.linkedin.com/in/natasha-silva-jelly-86715413/",color:"#5ba3e0",bg:"rgba(91,163,224,0.2)"},
+  {id:"twitter",name:"Twitter / X",handle:"@NSJmedia",url:"https://x.com/NSJmedia",color:"#aaa",bg:"rgba(170,170,170,0.12)"},
+  {id:"bluesky",name:"Bluesky",handle:"@natashasilvajelly",url:"https://bsky.app",color:"#44aadd",bg:"rgba(68,170,221,0.2)"},
+  {id:"pinterest",name:"Pinterest",handle:"pin.it/Sp7WipDGC",url:"https://pin.it/Sp7WipDGC",color:"#e05a5a",bg:"rgba(224,90,90,0.2)"},
+  {id:"tiktok",name:"TikTok",handle:"@natashasilvajelly",url:"https://www.tiktok.com/@natashasilvajelly",color:"#8bc34a",bg:"rgba(139,195,74,0.2)"},
+  {id:"shopmy",name:"ShopMy",handle:"My storefront",url:"https://shopmy.us",color:"#d4a043",bg:"rgba(212,160,67,0.2)"}
+];
+var STC={draft:"#666",ready:"#d4a043",scheduled:"#7b74dd",published:"#4caf50"};
+var STB={draft:"rgba(102,102,102,0.1)",ready:"rgba(212,160,67,0.12)",scheduled:"rgba(123,116,221,0.12)",published:"rgba(76,175,80,0.12)"};
+var DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var W={
+  wMo:0,pMo:0,calOff:0,calMode:"week",editId:null,editSt:"draft",activePlatId:null,activePlatUrl:"",nextId:7,
+  posts:[
+    {id:1,platform:"substack",type:"Article",title:"Everyone Is Obsessed With Carolyn Bessette",copy:"This is the real plot twist...",tags:"",link:"https://natashasilvajelly.substack.com",date:"2026-04-28",time:"09:00",status:"ready",notes:""},
+    {id:2,platform:"substack",type:"Note",title:"Quick take: resort dressing nobody talks about",copy:"The only resort look that matters...",tags:"",link:"",date:"2026-04-27",time:"10:00",status:"draft",notes:""},
+    {id:3,platform:"ig",type:"Reel",title:"My Oscars edit — the looks that actually mattered",copy:"Not the obvious ones.",tags:"#fashion #oscars",link:"",date:"2026-04-29",time:"11:00",status:"draft",notes:""},
+    {id:4,platform:"tiktok",type:"Video",title:"POV: you stopped buying trends",copy:"This single decision changed my entire wardrobe...",tags:"#quietluxury",link:"",date:"2026-04-30",time:"18:00",status:"scheduled",notes:""},
+    {id:5,platform:"linkedin",type:"Post",title:"Why personal style is a competitive advantage",copy:"After 15 years in media...",tags:"",link:"",date:"2026-05-01",time:"08:00",status:"draft",notes:""},
+    {id:6,platform:"twitter",type:"Thread",title:"5 fashion rules I broke this year",copy:"1/ Everyone told me never to mix prints...",tags:"#fashion",link:"",date:"2026-04-28",time:"12:00",status:"scheduled",notes:""}
+  ],
+  workTodos:[{text:"Finalise Substack Issue #2",done:false},{text:"Film TikTok trends piece",done:false},{text:"Reply to Brand X email",done:true}],
+  workQA:[{label:"Urgent tasks",prompt:"What are my most urgent NSJ Media tasks right now?"},{label:"Write article",prompt:"Help me write a Substack article for The New Front Row. Ask me the topic."},{label:"Draft pitch",prompt:"Help me draft an editorial pitch for The New Front Row."}],
+  ideas:[{cat:"Style",title:"The case for dressing like you have somewhere to be",status:"Ready"},{cat:"Style",title:"What quiet luxury gets wrong",status:"Draft"},{cat:"Beauty",title:"The 5-minute face that actually works",status:"Idea"},{cat:"Shopping",title:"Best investment pieces under $200",status:"Ready"},{cat:"NSJ Unfiltered",title:"Why I quit fast fashion",status:"Draft"},{cat:"NSJ in NYC",title:"Best vintage stores in NYC right now",status:"Idea"}],
+  partners:[{name:"ShopMy",type:"Affiliate",stage:"active",val:"$3.2K"},{name:"Brand X Fashion",type:"Sponsored",stage:"review",val:"$6K"}],
+  pitches:[{title:"The New Front Row: a new voice in fashion media",outlet:"Vogue Digital",status:"Draft"}],
+  radarData:{
+    all:[{n:1,kw:"Office Siren",src:"TikTok 2.8B views",cat:"style",hot:true},{n:2,kw:"Quiet luxury 2.0",src:"Google +340%",cat:"macro",hot:true},{n:3,kw:"BookTok meets fashion",src:"TikTok viral",cat:"culture",hot:true},{n:4,kw:"De-influencing",src:"Substack top essays",cat:"culture",hot:false},{n:5,kw:"Linen sets",src:"Google +220%",cat:"fashion",hot:false},{n:6,kw:"Princess Diana style",src:"Wikipedia",cat:"archive",hot:true},{n:7,kw:"Mob Wife aesthetic",src:"TikTok resurgence",cat:"viral",hot:true},{n:8,kw:"Ballet flats",src:"Pinterest +180%",cat:"shopping",hot:false},{n:9,kw:"NYC street style SS26",src:"IG rising",cat:"NYC",hot:false},{n:10,kw:"The Row",src:"IG 18M impressions",cat:"brand",hot:false}],
+    tiktok:[{n:1,kw:"Office Siren",src:"2.8B views",cat:"style",hot:true},{n:2,kw:"BookTok fashion",src:"Viral sound",cat:"culture",hot:true},{n:3,kw:"Mob Wife",src:"Resurgence",cat:"viral",hot:true},{n:4,kw:"Linen GRWM",src:"+180%",cat:"fashion",hot:false},{n:5,kw:"De-influencing 2.0",src:"Creator wave",cat:"culture",hot:false}],
+    substack:[{n:1,kw:"De-influencing",src:"Top essays",cat:"culture",hot:true},{n:2,kw:"Death of personal style",src:"Trending",cat:"opinion",hot:true},{n:3,kw:"Fashion and identity",src:"Rising",cat:"culture",hot:false},{n:4,kw:"NYC creative class",src:"Niche",cat:"NYC",hot:false},{n:5,kw:"Slow fashion economics",src:"High engage",cat:"industry",hot:false}],
+    shopping:[{n:1,kw:"The Row Margaux bag",src:"ShopMy top",cat:"accessories",hot:true},{n:2,kw:"Linen wide-leg",src:"Google +310%",cat:"fashion",hot:true},{n:3,kw:"SPF lip balm",src:"TikTok Shop",cat:"beauty",hot:true},{n:4,kw:"Ballet flats",src:"Pinterest +180%",cat:"shoes",hot:false},{n:5,kw:"Niacinamide serum",src:"Search +240%",cat:"skincare",hot:true}],
+    wiki:[{n:1,kw:"Princess Diana",src:"Wikipedia top",cat:"archive",hot:true},{n:2,kw:"Quiet luxury",src:"+180%",cat:"trend",hot:true},{n:3,kw:"Capsule wardrobe",src:"Rising",cat:"lifestyle",hot:false},{n:4,kw:"French girl style",src:"Steady",cat:"aesthetic",hot:false},{n:5,kw:"Fashion week",src:"Seasonal",cat:"industry",hot:false}]
+  },
+  pTodos:[{text:"Book dentist",done:false},{text:"Review May budget",done:false},{text:"Confirm school pickup",done:true}],
+  qaOrg:[{label:"Urgent family",prompt:"What are my most urgent personal and family tasks right now?"},{label:"Kids check-in",prompt:"Help me think through what my kids need from me this week."}],
+  qaFin:[{label:"Invoice template",prompt:"Create a professional invoice template for NSJ Media brand deals."},{label:"Tax checklist",prompt:"Tax checklist for a self-employed US media creator."},{label:"Debt strategy",prompt:"Give me a debt repayment strategy using avalanche vs snowball method."}],
+  expenses:[{name:"Rent",cat:"fixed",amt:3200},{name:"Utilities",cat:"fixed",amt:180},{name:"Phone",cat:"fixed",amt:85},{name:"Health insurance",cat:"fixed",amt:320},{name:"Groceries",cat:"variable",amt:600},{name:"Transport",cat:"variable",amt:150}],
+  debts:[],invoices:[],
+  books:[{title:"The Creative Act",author:"Rick Rubin",status:"reading"},{title:"Trick Mirror",author:"Jia Tolentino",status:"want"},{title:"The Year of Magical Thinking",author:"Joan Didion",status:"want"}],
+  learns:[{cat:"Philosophy",title:"Stoicism basics"},{cat:"Art + Design",title:"Modernist art movements"},{cat:"History",title:"20th century women in fashion"}],
+  vocabList:[
+    {word:"Ineffable",def:"Too great to be expressed in words",ex:"The ineffable sadness of a perfectly tailored black dress.",origin:"Latin: in- + effari"},
+    {word:"Sartorial",def:"Relating to tailoring, clothes, or style",ex:"Her sartorial choices spoke louder than any manifesto.",origin:"Latin: sartor, tailor"},
+    {word:"Liminal",def:"Occupying a transitional space between two states",ex:"Fashion lives in that liminal space between art and commerce.",origin:"Latin: limen, threshold"},
+    {word:"Quotidian",def:"Of or occurring every day; ordinary",ex:"She found poetry in the quotidian ritual of getting dressed.",origin:"Latin: quotidie, daily"},
+    {word:"Insouciant",def:"Showing casual indifference; breezy",ex:"She wore it with an insouciant ease that took years to master.",origin:"French: in- + soucier"},
+    {word:"Ephemeral",def:"Lasting for a very short time",ex:"The ephemeral nature of trends is what makes them fascinating.",origin:"Greek: ephemeros, one day"},
+    {word:"Laconic",def:"Using very few words; brief",ex:"Her laconic captions were more eloquent than paragraphs.",origin:"Greek: Lakonikos"},
+    {word:"Pellucid",def:"Translucently clear; expressed with great clarity",ex:"Her prose was pellucid — no word wasted.",origin:"Latin: pellucere, to shine through"}
+  ],
+  vocabIdx:0,wordList:[],
+  levelUpTopics:[
+    {title:"Philosophy",color:"#7b74dd",desc:"Stoicism, ethics, existentialism",prompt:"Give me a philosophy cheat sheet — one key idea each from Stoicism, Existentialism, Buddhism and Plato. Practical and relevant to modern creative life."},
+    {title:"Politics",color:"#e05a5a",desc:"Current affairs and political thought",prompt:"Give me a concise political briefing relevant to a NYC-based media creator."},
+    {title:"History",color:"#d4a043",desc:"Key events, movements, turning points",prompt:"Give me a history cheat sheet — 5 events or figures from the 20th century that shaped fashion, media, culture and womens rights."},
+    {title:"Science",color:"#5ba3e0",desc:"Discoveries, research, ideas",prompt:"Give me a science cheat sheet — 5 fascinating concepts across neuroscience, biology and physics relevant to creativity."},
+    {title:"Culture",color:"#4caf50",desc:"Art, film, music, social movements",prompt:"Give me a culture briefing — what is happening right now in art, film, music and social movements that a sophisticated NYC media creator should know?"},
+    {title:"Art + Design",color:"#44aadd",desc:"Movements, designers, visual culture",prompt:"Give me an art and design cheat sheet — 5 key movements or designers and how they connect to contemporary fashion."},
+    {title:"Fashion",color:"#b8975a",desc:"History, theory, cultural context",prompt:"Give me a fashion history cheat sheet — 5 key moments or designers that shaped fashion, with cultural context."}
+  ],
+  spCards:[
+    {cat:"Vocabulary",word:"La moda",hint:"The whole world you write about",answer:"Fashion",phrase:"La moda es mi pasion.",phraseEn:"Fashion is my passion."},
+    {cat:"Vocabulary",word:"El disenador",hint:"The person behind the clothes",answer:"The designer",phrase:"El disenador presento su coleccion.",phraseEn:"The designer presented their collection."},
+    {cat:"Phrase",word:"Que llevas puesto?",hint:"Someone admires your outfit",answer:"What are you wearing?",phrase:"",phraseEn:""},
+    {cat:"Vocabulary",word:"La temporada",hint:"Think: fashion week seasons",answer:"The season",phrase:"La nueva temporada es increible.",phraseEn:"The new season is incredible."},
+    {cat:"Phrase",word:"Me encanta este look",hint:"Expressing love for a look",answer:"I love this look",phrase:"",phraseEn:""},
+    {cat:"Vocabulary",word:"Elegante",hint:"Very close to the English word",answer:"Elegant / stylish",phrase:"Que elegante te ves hoy.",phraseEn:"How elegant you look today."},
+    {cat:"Vocabulary",word:"La pasarela",hint:"Where models walk at fashion week",answer:"The runway",phrase:"Los modelos desfilaron en la pasarela.",phraseEn:"The models walked the runway."},
+    {cat:"Phrase",word:"Donde lo compraste?",hint:"Admiring something someone is wearing",answer:"Where did you buy it?",phrase:"",phraseEn:""}
+  ],
+  sp1Idx:0,sp2Idx:0,sp2Streak:0,sp2Correct:0,sp2Total:0,
+  phrases:[
+    {es:"La vida es demasiado corta para ropa aburrida.",en:"Life is too short for boring clothes."},
+    {es:"La moda pasa, el estilo queda.",en:"Fashion fades, style is eternal."},
+    {es:"Vestirse bien es una forma de buena educacion.",en:"Dressing well is a form of good manners."},
+    {es:"Hoy es un buen dia para tener un buen dia.",en:"Today is a good day to have a good day."}
+  ],
+  goals:[{title:"Launch The New Front Row",cat:"Work",progress:40},{title:"Reach 1K subscribers",cat:"Work",progress:5},{title:"Close first brand deal",cat:"Work",progress:20},{title:"Daily Spanish practice",cat:"Personal",progress:30},{title:"Read 12 books this year",cat:"Personal",progress:25},{title:"Build 3-month emergency fund",cat:"Finance",progress:15}],
+  topicData:{longevity:{notes:[],links:[]},fitness:{notes:[],links:[]},headspace:{notes:[],links:[]}},
+  activeTopicKey:null
+};
+
+function g(id){return document.getElementById(id);}
+function tick(){
+  var n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  var ap=h>=12?"PM":"AM";h=h%12||12;
+  var ts=h+":"+(m<10?"0":"")+m+":"+(s<10?"0":"")+s+" "+ap;
+  var ds=DAYS[n.getDay()]+" · "+MONTHS[n.getMonth()]+" "+n.getDate()+", "+n.getFullYear();
+  var gr=(n.getHours()<12?"Good morning":n.getHours()<17?"Good afternoon":"Good evening")+", Natasha";
+  ["wct","pct"].forEach(function(id){var e=g(id);if(e)e.textContent=ts;});
+  ["wcd","pcd"].forEach(function(id){var e=g(id);if(e)e.textContent=ds;});
+  ["wgreet","pgreet"].forEach(function(id){var e=g(id);if(e)e.textContent=gr;});
+}
+setInterval(tick,1000);tick();
+
+function switchDash(which){
+  document.querySelectorAll(".dashboard").forEach(function(d){d.classList.remove("active");});
+  g(which+"-dash").classList.add("active");
+}
+function d2iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+
+function buildCal(pre,off){
+  var now=new Date(),t=new Date(now.getFullYear(),now.getMonth()+off,1);
+  var y=t.getFullYear(),mo=t.getMonth();
+  var lbl=g(pre+"month-lbl");if(lbl)lbl.textContent=MONTHS[mo]+" "+y;
+  var sd=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate();
+  var html="";["S","M","T","W","T","F","S"].forEach(function(d){html+="<div class=\"mch\">"+d+"</div>";});
+  for(var i=0;i<sd;i++)html+="<div class=\"mcd om\"></div>";
+  var tD=now.getDate(),tMo=now.getMonth(),tY=now.getFullYear();
+  for(var d=1;d<=dim;d++)html+="<div class=\"mcd"+(d===tD&&mo===tMo&&y===tY?" td":"")+"\">"+d+"</div>";
+  var el=g(pre+"month-cal");if(el)el.innerHTML=html;
+}
+function changeWMonth(d){W.wMo+=d;buildCal("w",W.wMo);}function goWToday(){W.wMo=0;buildCal("w",0);}
+function changePMonth(d){W.pMo+=d;buildCal("p",W.pMo);}function goPToday(){W.pMo=0;buildCal("p",0);}
+
+function psvg(plat,sz){
+  sz=sz||16;var c=plat.color;
+  var i={
+    substack:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\"><rect x=\"2\" y=\"3\" width=\"16\" height=\"2.5\" rx=\"1\" fill=\""+c+"\"/><rect x=\"2\" y=\"7.5\" width=\"16\" height=\"2.5\" rx=\"1\" fill=\""+c+"\"/><path d=\"M2 12.5h16v5l-8-2.5-8 2.5z\" fill=\""+c+"\"/></svg>",
+    ig:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\"none\"><rect x=\"2\" y=\"2\" width=\"16\" height=\"16\" rx=\"5\" stroke=\""+c+"\" stroke-width=\"1.8\"/><circle cx=\"10\" cy=\"10\" r=\"3.5\" stroke=\""+c+"\" stroke-width=\"1.8\"/><circle cx=\"14.5\" cy=\"5.5\" r=\"1.2\" fill=\""+c+"\"/></svg>",
+    fb:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><path d=\"M17 10A7 7 0 1 0 3 10a7 7 0 0 0 7 7v-5H8v-2h2V8.5c0-1.7 1-2.7 2.6-2.7.7 0 1.4.1 1.4.1v1.7h-.8c-.8 0-1 .5-1 1V10h1.8l-.3 2H12v5a7 7 0 0 0 5-7z\"/></svg>",
+    threads:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><path d=\"M10 2C6.7 2 4 4.7 4 8c0 2.1 1.1 4 2.7 5.1.3-1 .5-2 .5-2s-.4-.8-.4-2C6.8 7 8.2 5.6 10 5.6c1 0 1.8.4 2.4 1l-1.2 1.2C11.6 8.3 12 9.1 12 10c0 1.7-1.3 3-3 3-.7 0-1.3-.3-1.8-.7L6 14c.9 1.2 2.4 2 4 2 3.3 0 6-2.7 6-6S13.3 2 10 2z\"/></svg>",
+    linkedin:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><rect x=\"2\" y=\"7\" width=\"3\" height=\"10\"/><circle cx=\"3.5\" cy=\"4\" r=\"1.8\"/><path d=\"M8 7h2.5v1.4S11.2 7 13 7c2.2 0 3.5 1.3 3.5 4V17h-3v-5c0-1.3-.4-2.2-1.7-2.2S10 10.6 10 12v5H8V7z\"/></svg>",
+    twitter:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><path d=\"M14.5 2.5h2.2l-4.8 5.5L18 17.5h-4.4l-3.4-4.5-3.9 4.5H4.1l5.1-5.9L2.5 2.5h4.5l3 4 3.5-4zm-.8 13.5h1.2L6.4 4H5.1l8.6 12z\"/></svg>",
+    bluesky:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><path d=\"M10 5C8 5 5 7 3.5 9.5c0 0 .8.5 2.5.5 0 0-.5 1.5 0 3 0 0 .8-.5 4-.5s4 .5 4 .5c.5-1.5 0-3 0-3 1.7 0 2.5-.5 2.5-.5C15 7 12 5 10 5z\"/></svg>",
+    pinterest:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\""+c+"\"><path d=\"M10 2a8 8 0 0 0-3 15.4c0-.7.1-1.8.3-2.5l2.2-9.3s-.3-.6-.3-1.5c0-1.4.8-2.4 1.9-2.4.9 0 1.3.7 1.3 1.5 0 .9-.6 2.3-.9 3.5-.2 1 .5 1.8 1.5 1.8 1.8 0 3-1.9 3-4.7 0-2.4-1.7-4.1-4.2-4.1-2.8 0-4.5 2.1-4.5 4.3 0 .9.3 1.8.8 2.3l-.3 1.2c-.1.2-.2.3-.4.2C5.3 13 4 11.4 4 9.4 4 6.1 6.4 3 10 3z\"/></svg>",
+    tiktok:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\"none\"><path d=\"M12 3v9a2.5 2.5 0 1 1-2-2.4V7a5 5 0 0 0 5 4.9V9a7 7 0 0 1-2.9-2.2V3H12z\" fill=\""+c+"\"/></svg>",
+    shopmy:"<svg width=\""+sz+"\" height=\""+sz+"\" viewBox=\"0 0 20 20\" fill=\"none\"><path d=\"M5 5h10l-1.2 7H6.2L5 5zM5 5L4 3H2\" stroke=\""+c+"\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"7.5\" cy=\"16\" r=\"1.3\" fill=\""+c+"\"/><circle cx=\"13.5\" cy=\"16\" r=\"1.3\" fill=\""+c+"\"/></svg>"
+  };
+  return i[plat.id]||"<span style=\"font-size:8px;color:"+c+"\">"+plat.id.slice(0,2).toUpperCase()+"</span>";
+}
+
+function buildCards(){
+  var el=g("cards-grid");if(!el)return;var html="";
+  PLATS.forEach(function(plat){
+    var cnt=W.posts.filter(function(p){return p.platform===plat.id;}).length;
+    var nxt=W.posts.find(function(p){return p.platform===plat.id&&p.status!=="published";});
+    var sc=cnt>0?STC.published:STC.draft,sb=cnt>0?STB.published:STB.draft;
+    html+="<div class=\"plat-card\" onclick=\"openCalOverlay('"+plat.id+"')\">";
+    html+="<div class=\"pc-top\"><div class=\"pc-icon\" style=\"background:"+plat.bg+"\">"+psvg(plat,14)+"</div><span class=\"pc-badge\" style=\"background:"+sb+";color:"+sc+"\">"+(cnt>0?cnt+" posts":"No posts")+"</span></div>";
+    html+="<div class=\"pc-name\">"+plat.name+"</div><div class=\"pc-handle\">"+plat.handle+"</div>";
+    html+="<div class=\"pc-footer\"><span class=\"pc-next\">"+(nxt?nxt.title.slice(0,18)+"...":"Add first post")+"</span><span class=\"pc-open\" onclick=\"event.stopPropagation();window.open('"+plat.url+"','_blank')\">open &#8599;</span></div></div>";
+  });
+  el.innerHTML=html;
+}
+
+function openCalOverlay(platId){
+  W.activePlatId=platId;W.calOff=0;W.calMode="week";
+  var plat=PLATS.find(function(p){return p.id===platId;});if(!plat)return;
+  W.activePlatUrl=plat.url;
+  var ci=g("cal-icon");if(ci){ci.style.background=plat.bg;ci.innerHTML=psvg(plat,13);}
+  if(g("cal-name"))g("cal-name").textContent=plat.name;
+  if(g("cal-handle"))g("cal-handle").textContent=plat.handle;
+  document.querySelectorAll(".vtabs .vt").forEach(function(t,i){t.classList.toggle("on",i===0);});
+  g("cal-overlay").classList.add("open");renderCal();
+}
+function openActivePlatLink(){window.open(W.activePlatUrl,"_blank");}
+function closeCalOverlay(){g("cal-overlay").classList.remove("open");W.activePlatId=null;}
+function calChangeWeek(d){W.calOff+=d;renderCal();}function calGoToday(){W.calOff=0;renderCal();}
+function setCalMode(m,el){W.calMode=m;document.querySelectorAll(".vtabs .vt").forEach(function(t){t.classList.remove("on");});el.classList.add("on");renderCal();}
+function getWeekDates(off){
+  var n=new Date();n.setDate(n.getDate()+(off||0)*7);
+  var dow=n.getDay(),mon=new Date(n);mon.setDate(n.getDate()-dow+1);
+  var arr=[];for(var i=0;i<7;i++){var d=new Date(mon);d.setDate(mon.getDate()+i);arr.push(d);}return arr;
+}
+function renderCal(){
+  var dates=getWeekDates(W.calOff);var f=dates[0],l=dates[6];
+  var wl=g("cal-week-lbl");if(wl)wl.textContent=MONTHS[f.getMonth()]+" "+f.getDate()+" - "+MONTHS[l.getMonth()]+" "+l.getDate();
+  var body=g("cal-body");if(!body)return;
+  if(W.calMode==="week")renderWeek(dates,body);
+  else if(W.calMode==="month")renderCalMonth(body);
+  else renderCalDay(dates,body);
+}
+function renderWeek(dates,body){
+  var now=new Date(),tISO=d2iso(now);
+  var html="<div class=\"week-hd\">";
+  dates.forEach(function(d){var isT=d2iso(d)===tISO;html+="<div class=\"wghd\"><div class=\"wghd-name\">"+DAYS[d.getDay()].slice(0,3)+"</div><div class=\"wghd-num"+(isT?" today-n":"")+"\">"+d.getDate()+"</div></div>";});
+  html+="</div><div style=\"display:grid;grid-template-columns:repeat(7,1fr);min-height:280px\">";
+  dates.forEach(function(d){
+    var iso=d2iso(d),dp=W.posts.filter(function(p){return p.platform===W.activePlatId&&p.date===iso;});
+    html+="<div class=\"wday\">";
+    dp.forEach(function(post){var sc=STC[post.status]||"#666",sb=STB[post.status]||"rgba(0,0,0,0.05)";
+      html+="<div class=\"board-card\" onclick=\"openEditPost("+post.id+")\"><div class=\"bc-type\" style=\"color:"+sc+"\">"+post.type+"</div><div class=\"bc-title\">"+post.title+"</div>"+(post.copy?"<div class=\"bc-copy\">"+post.copy+"</div>":"")+"<div style=\"display:flex;align-items:center;gap:4px;flex-wrap:wrap\"><span class=\"bc-pill\" style=\"background:"+sb+";color:"+sc+"\">"+post.status+"</span>"+(post.time?"<span class=\"bc-time\">"+post.time+"</span>":"")+"</div></div>";
+    });
+    html+="<div class=\"add-day-btn\" onclick=\"openNewPost('"+W.activePlatId+"','"+iso+"')\">+ Add post</div></div>";
+  });
+  html+="</div>";body.innerHTML=html;
+}
+function renderCalMonth(body){
+  var now=new Date(),ref=new Date(now);ref.setDate(ref.getDate()+W.calOff*7);
+  var y=ref.getFullYear(),mo=ref.getMonth();
+  var sd=new Date(y,mo,1).getDay(),dim=new Date(y,mo+1,0).getDate();
+  var html="<div style=\"border-left:0.5px solid var(--bd);border-top:0.5px solid var(--bd)\"><div class=\"month-cal-grid\">";
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function(d){html+="<div class=\"mhd-cell\">"+d+"</div>";});
+  html+="</div><div style=\"display:grid;grid-template-columns:repeat(7,1fr)\">";
+  for(var i=0;i<sd;i++)html+="<div class=\"mcell other-mo\"></div>";
+  for(var d=1;d<=dim;d++){
+    var iso=y+"-"+String(mo+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    var dp=W.posts.filter(function(p){return p.platform===W.activePlatId&&p.date===iso;});
+    var isT=(d===now.getDate()&&mo===now.getMonth()&&y===now.getFullYear()),isoD=iso;
+    html+="<div class=\"mcell"+(isT?" today-cell":"")+"\"><div class=\"mc-num\">"+d+"</div>";
+    dp.forEach(function(post){var plat=PLATS.find(function(p){return p.id===W.activePlatId;})||PLATS[0];html+="<div class=\"mc-dot\" style=\"background:"+plat.bg+";color:"+plat.color+"\" onclick=\"openEditPost("+post.id+")\">"+post.title.slice(0,13)+"</div>";});
+    html+="<div style=\"font-size:8px;color:var(--t4);cursor:pointer;text-align:center\" onclick=\"openNewPost('"+W.activePlatId+"','"+isoD+"')\">+</div></div>";
+  }
+  html+="</div></div>";body.innerHTML=html;
+}
+function renderCalDay(dates,body){
+  var d=dates[3],iso=d2iso(d);
+  var dp=W.posts.filter(function(p){return p.platform===W.activePlatId&&p.date===iso;});
+  var html="<div style=\"padding:14px 18px\"><div style=\"font-family:var(--font-serif);font-size:17px;color:var(--t1);margin-bottom:12px\">"+DAYS[d.getDay()]+", "+MONTHS[d.getMonth()]+" "+d.getDate()+"</div>";
+  if(!dp.length)html+="<div style=\"font-size:11px;color:var(--t3);margin-bottom:12px\">No posts scheduled.</div>";
+  dp.forEach(function(post){var sc=STC[post.status]||"#666";html+="<div class=\"board-card\" onclick=\"openEditPost("+post.id+")\" style=\"margin-bottom:9px\"><div style=\"font-size:12px;font-weight:500;color:var(--t1);margin-bottom:5px\">"+post.title+"</div><div style=\"font-size:8px;color:"+sc+"\">"+post.type+" · "+post.status+"</div></div>";});
+  html+="<div class=\"add-day-btn\" onclick=\"openNewPost('"+W.activePlatId+"','"+iso+"')\">+ Add post for this day</div></div>";
+  body.innerHTML=html;
+}
+
+function openNewPost(platId,dateISO){
+  W.editId=null;
+  g("pm-platform").value=platId||"substack";g("pm-type").value="Post";
+  ["pm-post-title","pm-copy","pm-tags","pm-link","pm-notes"].forEach(function(id){if(g(id))g(id).value="";});
+  g("pm-date").value=dateISO||"";g("pm-time").value="";
+  setSt(null,"draft");updatePMPlat();g("pm-del").style.display="none";
+  if(g("pm-copy-ok"))g("pm-copy-ok").classList.remove("show");
+  g("pm-bg").classList.add("open");
+}
+function openEditPost(id){
+  var post=W.posts.find(function(p){return p.id===id;});if(!post)return;
+  W.editId=id;
+  g("pm-platform").value=post.platform;g("pm-type").value=post.type;g("pm-post-title").value=post.title;
+  g("pm-copy").value=post.copy;g("pm-tags").value=post.tags||"";g("pm-link").value=post.link||"";
+  g("pm-date").value=post.date;g("pm-time").value=post.time;g("pm-notes").value=post.notes||"";
+  setSt(null,post.status);updatePMPlat();g("pm-del").style.display="block";
+  if(g("pm-copy-ok"))g("pm-copy-ok").classList.remove("show");
+  g("pm-bg").classList.add("open");
+}
+function updatePMPlat(){
+  var pid=g("pm-platform").value;var plat=PLATS.find(function(p){return p.id===pid;})||PLATS[0];
+  var pi=g("pm-icon");if(pi){pi.style.background=plat.bg;pi.innerHTML=psvg(plat,12);}
+  var ps=g("pm-sub");if(ps)ps.textContent=plat.handle;
+}
+function setSt(el,val){
+  W.editSt=val;
+  document.querySelectorAll("#pm-spills .spill").forEach(function(o){o.classList.remove("on");});
+  if(el)el.classList.add("on");
+  else document.querySelectorAll("#pm-spills .spill").forEach(function(o){if(o.textContent.toLowerCase()===val)o.classList.add("on");});
+}
+function savePost(){
+  var post={id:W.editId||W.nextId++,platform:g("pm-platform").value,type:g("pm-type").value,title:g("pm-post-title").value||"Untitled",copy:g("pm-copy").value,tags:g("pm-tags").value,link:g("pm-link").value,date:g("pm-date").value,time:g("pm-time").value,status:W.editSt||"draft",notes:g("pm-notes").value};
+  if(W.editId){var i=W.posts.findIndex(function(p){return p.id===W.editId;});if(i>-1)W.posts[i]=post;}else W.posts.push(post);
+  closePM();buildCards();if(W.activePlatId)renderCal();buildKanban();
+}
+function deletePost(){if(!W.editId)return;W.posts=W.posts.filter(function(p){return p.id!==W.editId;});closePM();buildCards();if(W.activePlatId)renderCal();buildKanban();}
+function copyAndOpen(){
+  var title=g("pm-post-title").value,copy=g("pm-copy").value,tags=g("pm-tags").value,link=g("pm-link").value;
+  var full=(title?title+"\n\n":"")+copy+(tags?"\n\n"+tags:"")+(link?"\n\n"+link:"");
+  if(navigator.clipboard)navigator.clipboard.writeText(full).catch(function(){});
+  var pid=g("pm-platform").value,plat=PLATS.find(function(p){return p.id===pid;})||PLATS[0];
+  if(g("pm-copy-ok"))g("pm-copy-ok").classList.add("show");
+  setTimeout(function(){window.open(plat.url,"_blank");},600);
+}
+function copyAIPrompt(action){
+  var pid=g("pm-platform").value,plat=PLATS.find(function(p){return p.id===pid;})||PLATS[0];
+  var title=g("pm-post-title").value,copy=g("pm-copy").value,type=g("pm-type").value;
+  var pm={
+    write:"Write a "+type+" for "+plat.name+" for The New Front Row. Topic: \""+title+"\". Voice: sophisticated, direct, culturally fluent, NYC fashion insider.",
+    rewrite:"Rewrite this more compellingly. Original: \""+copy+"\"",
+    shorter:"Make shorter and punchier. Keep the voice. Original: \""+copy+"\"",
+    hooks:"5 opening hooks for \""+title+"\". Under 10 words each.",
+    repurpose:"Repurpose for ALL platforms: Instagram, TikTok, LinkedIn, Twitter, Threads, Pinterest, Substack Note. Original: \""+copy+"\"",
+    hashtags:"15 hashtags for \""+title+"\". Mix niche and broad."
+  };
+  if(navigator.clipboard)navigator.clipboard.writeText(pm[action]||pm.write).catch(function(){});
+  if(g("pm-copy-ok")){g("pm-copy-ok").classList.add("show");setTimeout(function(){g("pm-copy-ok").classList.remove("show");},2000);}
+}
+function closePM(e){if(e&&e.target!==g("pm-bg"))return;g("pm-bg").classList.remove("open");}
+
+function renderWorkTodos(){
+  var html="";W.workTodos.forEach(function(t,i){html+="<div class=\"todo-row\"><div class=\"chk"+(t.done?" done":"")+"\" onclick=\"toggleWorkTodo("+i+")\">"+(t.done?"<svg width=\"6\" height=\"6\" viewBox=\"0 0 8 8\"><path d=\"M1 4L3 6L7 2\" stroke=\"#000\" stroke-width=\"1.5\" fill=\"none\"/></svg>":"")+"</div><span class=\"ct"+(t.done?" done":"")+"\">"+t.text+"</span></div>";});
+  var el=g("work-todos");if(el)el.innerHTML=html;
+}
+function toggleWorkTodo(i){W.workTodos[i].done=!W.workTodos[i].done;renderWorkTodos();}
+function addWorkTodo(){var t=prompt("New task:");if(!t)return;W.workTodos.push({text:t,done:false});renderWorkTodos();}
+
+function renderWorkQA(){
+  var el=g("work-qa");if(!el)return;var html="";
+  W.workQA.forEach(function(a,i){
+    html+="<div class=\"qabtn\"><span class=\"qa-dot\"></span><span style=\"flex:1;cursor:pointer\" onclick=\"alert('Copy this prompt into Claude chat:\\n\\n"+a.prompt.replace(/'/g,"\\'")+"')\">"+a.label+" &#8599;</span><span style=\"font-size:7px;color:var(--t3);cursor:pointer;margin-left:3px\" onclick=\"editWQA("+i+"\">[e]</span><span style=\"font-size:7px;color:#ef5350;cursor:pointer;margin-left:2px\" onclick=\"delWQA("+i+"\">[x]</span></div>";
+  });
+  el.innerHTML=html;
+}
+function editWQA(i){var l=prompt("Label:",W.workQA[i].label);if(!l)return;var p=prompt("Prompt:",W.workQA[i].prompt);if(!p)return;W.workQA[i]={label:l,prompt:p};renderWorkQA();}
+function delWQA(i){W.workQA.splice(i,1);renderWorkQA();}
+function addWorkQA(){var l=prompt("Label:");if(!l)return;var p=prompt("What Claude does:");if(!p)return;W.workQA.push({label:l,prompt:p});renderWorkQA();}
+
+function renderRadar(key){
+  var data=W.radarData[key]||W.radarData.all;var html="";
+  data.forEach(function(t){html+="<div class=\"trend-row\" onclick=\"alert('Ask Claude: Trend: "+t.kw+" — 3 content angles for The New Front Row')\"><span class=\"tnum\">"+t.n+"</span><div style=\"flex:1\"><div class=\"tkw\">"+t.kw+(t.hot?" <span class=\"thot\">HOT</span>":"")+"</div><div class=\"tvol\">"+t.src+"</div></div><span class=\"tcat\">"+t.cat+"</span></div>";});
+  var el=g("radar-list");if(el)el.innerHTML=html;
+}
+function switchRadar(key,el){document.querySelectorAll("#rtabs .rtab").forEach(function(t){t.classList.remove("on");});el.classList.add("on");renderRadar(key);}
+
+function buildKanban(){
+  var statuses=["draft","ready","scheduled","published"],labels={draft:"Draft",ready:"Ready",scheduled:"Scheduled",published:"Published"};
+  var html="";
+  statuses.forEach(function(st){
+    var posts=W.posts.filter(function(p){return p.status===st;}),sc=STC[st];
+    html+="<div class=\"kanban-col\"><div style=\"font-size:8px;font-weight:500;text-transform:uppercase;color:"+sc+";margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--bd)\">"+labels[st]+" ("+posts.length+")</div>";
+    posts.forEach(function(post){var plat=PLATS.find(function(p){return p.id===post.platform;})||PLATS[0];html+="<div class=\"kanban-card\" onclick=\"openEditPost("+post.id+")\"><div style=\"font-size:7px;color:"+plat.color+";text-transform:uppercase;margin-bottom:3px;font-weight:500\">"+plat.name+"</div><div style=\"font-size:9px;font-weight:500;color:var(--t1);line-height:1.35\">"+post.title+"</div>"+(post.date?"<div style=\"font-size:7px;color:var(--t3);margin-top:3px\">"+post.date+(post.time?" · "+post.time:"")+"</div>":"")+"</div>";});
+    html+="</div>";
+  });
+  var kb=g("kanban-board");if(kb)kb.innerHTML=html;
+}
+
+function addIdea(){var cat=prompt("Category:");if(!cat)return;var title=prompt("Idea:");if(!title)return;W.ideas.push({cat:cat,title:title,status:"Idea"});renderIdeas("all");}
+function renderIdeas(filter){
+  var cc={Style:"#7b74dd",Beauty:"#e87aaa",Shopping:"#d4a043","NSJ Unfiltered":"#4caf50","NSJ in NYC":"#5ba3e0"};
+  var html="";W.ideas.forEach(function(idea){if(filter!=="all"&&idea.cat!==filter)return;html+="<div class=\"fin-box\" onclick=\"alert('Ask Claude: Help me develop this idea for The New Front Row: "+idea.title+"')\"><div style=\"font-size:7px;text-transform:uppercase;font-weight:500;margin-bottom:4px;color:"+(cc[idea.cat]||"#666")+"\">"+idea.cat+"</div><div style=\"font-family:var(--font-serif);font-size:10px;color:var(--t1);line-height:1.4;margin-bottom:4px\">"+idea.title+"</div><div style=\"font-size:7px;color:var(--t3);text-transform:uppercase\">"+idea.status+"</div></div>";});
+  var el=g("ideas-grid");if(el)el.innerHTML=html;
+}
+function filterIdeas(cat,el){document.querySelectorAll("#idea-tabs .tnav").forEach(function(t){t.classList.remove("on");});el.classList.add("on");renderIdeas(cat);}
+
+function addPartner(){var name=prompt("Partner name:");if(!name)return;W.partners.push({name:name,type:prompt("Type:")||"Prospect",stage:"prospect",val:"TBD"});renderPartners();}
+function renderPartners(){
+  var sc={active:"#4caf50",review:"#d4a043",prospect:"#7b74dd"};var html="";
+  W.partners.forEach(function(p){html+="<div style=\"display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:0.5px solid var(--bd)\"><div><div style=\"font-size:11px;color:var(--t1);font-weight:500\">"+p.name+"</div><div style=\"font-size:8px;color:var(--t3);margin-top:1px\">"+p.type+"</div></div><span style=\"font-size:7px;padding:2px 7px;border-radius:10px;font-weight:500;color:"+(sc[p.stage]||"#666")+";background:"+(p.stage==="active"?"rgba(76,175,80,0.12)":p.stage==="review"?"rgba(212,160,67,0.12)":"rgba(123,116,221,0.12)")+"\">"+p.stage+"</span><div style=\"font-size:10px;color:var(--t2)\">"+p.val+"</div></div>";});
+  var el=g("partners-list");if(el)el.innerHTML=html;
+}
+function addPitch(){var title=prompt("Pitch title:");if(!title)return;W.pitches.push({title:title,outlet:prompt("Outlet:")||"TBD",status:"Draft"});renderPitches();}
+function renderPitches(){
+  var html="";W.pitches.forEach(function(p){html+="<div style=\"padding:9px 14px;border-bottom:0.5px solid var(--bd);cursor:pointer\" onclick=\"alert('Ask Claude: Help develop this pitch: "+p.title+" to "+p.outlet+"')\"><div style=\"font-size:11px;color:var(--t1);font-family:var(--font-serif)\">"+p.title+"</div><div style=\"font-size:8px;color:var(--t3);margin-top:2px\">"+p.outlet+" · "+p.status+"</div></div>";});
+  var el=g("pitches-list");if(el)el.innerHTML=html;
+}
+
+function showWPage(id,el){
+  document.querySelectorAll("#work-dash .page").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll("#work-nav .tnav").forEach(function(t){t.classList.remove("on");});
+  var pg=g(id);if(pg)pg.classList.add("on");if(el)el.classList.add("on");
+  if(id==="w-allposts")buildKanban();if(id==="w-ideas")renderIdeas("all");if(id==="w-partners")renderPartners();if(id==="w-pitches")renderPitches();
+}
+
+function renderPTodos(){
+  var html="";W.pTodos.forEach(function(t,i){html+="<div class=\"todo-row\"><div class=\"chk"+(t.done?" done":"")+"\" onclick=\"togglePTodo("+i+")\">"+(t.done?"<svg width=\"6\" height=\"6\" viewBox=\"0 0 8 8\"><path d=\"M1 4L3 6L7 2\" stroke=\"#000\" stroke-width=\"1.5\" fill=\"none\"/></svg>":"")+"</div><span class=\"ct"+(t.done?" done":"")+"\">"+t.text+"</span></div>";});
+  var el=g("life-todos");if(el)el.innerHTML=html;
+}
+function togglePTodo(i){W.pTodos[i].done=!W.pTodos[i].done;renderPTodos();}
+function addTodo(){var t=prompt("New task:");if(!t)return;W.pTodos.push({text:t,done:false});renderPTodos();}
+
+function renderQA(type){
+  var arr=type==="org"?W.qaOrg:W.qaFin,id=type==="org"?"qa-org":"qa-fin";
+  var el=g(id);if(!el)return;var html="";
+  arr.forEach(function(a,i){html+="<div class=\"qabtn\"><span class=\"qa-dot\"></span><span style=\"flex:1;cursor:pointer\" onclick=\"alert('Copy this prompt into Claude chat:\\n\\n"+a.prompt.replace(/'/g,"\\'")+"\')\">" +a.label+" &#8599;</span><span style=\"font-size:7px;color:var(--t3);cursor:pointer;margin-left:3px\" onclick=\"editQA('"+type+"',"+i+"\">[e]</span><span style=\"font-size:7px;color:#ef5350;cursor:pointer;margin-left:2px\" onclick=\"delQA('"+type+"',"+i+"\">[x]</span></div>";});
+  el.innerHTML=html;
+}
+function editQA(t,i){var a=t==="org"?W.qaOrg:W.qaFin;var l=prompt("Label:",a[i].label);if(!l)return;var p=prompt("Prompt:",a[i].prompt);if(!p)return;a[i]={label:l,prompt:p};renderQA(t);}
+function delQA(t,i){(t==="org"?W.qaOrg:W.qaFin).splice(i,1);renderQA(t);}
+function addQA(t){var l=prompt("Label:");if(!l)return;var p=prompt("What Claude does:");if(!p)return;(t==="org"?W.qaOrg:W.qaFin).push({label:l,prompt:p});renderQA(t);}
+
+function toggleTopic(key){var body=g("tb-"+key);if(!body)return;body.classList.toggle("open");if(body.classList.contains("open"))renderTopicBody(key);}
+function renderTopicBody(key){
+  var body=g("tb-"+key);if(!body)return;
+  var d=W.topicData[key]||{notes:[],links:[]};
+  if(!d.notes.length&&!d.links.length){body.innerHTML="<div style=\"font-size:8px;color:var(--t3);padding:5px 0\">No notes or links yet.</div>";return;}
+  var html="";d.notes.forEach(function(n){html+="<div class=\"topic-note\">"+n.text+"<div class=\"topic-note-meta\">"+n.date+"</div></div>";});d.links.forEach(function(l){html+="<a class=\"topic-link-item\" href=\""+l.url+"\" target=\"_blank\">"+l.label+"</a>";});body.innerHTML=html;
+}
+function openTopicModal(key,mode){W.activeTopicKey=key;openPModal("topic_"+mode);}
+function addHealthTopic(){
+  var name=prompt("Topic name:");if(!name)return;
+  var key="h_"+name.toLowerCase().replace(/\s+/g,"_");W.topicData[key]={notes:[],links:[]};
+  var container=g("extra-health");if(!container)return;
+  var d=document.createElement("div");d.className="topic-panel";
+  d.innerHTML="<div class=\"topic-hd\" onclick=\"toggleTopic('"+key+"')\"><span class=\"topic-title\">"+name+"</span><div class=\"topic-actions\"><button class=\"tbtn\" onclick=\"event.stopPropagation();alert('Ask Claude: Latest expert insights on "+name+". Evidence-based and actionable.')\">Feed &#8599;</button><button class=\"tbtn\" onclick=\"event.stopPropagation();openTopicModal('"+key+"','note')\">+ Note</button><button class=\"tbtn\" onclick=\"event.stopPropagation();openTopicModal('"+key+"','link')\">+ Link</button></div></div><div class=\"topic-body\" id=\"tb-"+key+"\"><div style=\"font-size:8px;color:var(--t3);padding:5px 0\">No notes yet.</div></div>";
+  container.appendChild(d);
+}
+
+function renderVocab(){var v=W.vocabList[W.vocabIdx%W.vocabList.length];if(g("v-word"))g("v-word").textContent=v.word;if(g("v-def"))g("v-def").textContent=v.def;}
+function openVocabMore(){
+  var v=W.vocabList[W.vocabIdx%W.vocabList.length];
+  var mb=g("p-mod-body"),mt=g("p-mod-title"),mf=g("p-mod-footer");
+  mt.textContent=v.word;
+  mb.innerHTML="<div style=\"font-family:var(--font-serif);font-size:20px;color:var(--gold);margin-bottom:6px\">"+v.word+"</div><div style=\"font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:7px\">"+v.def+"</div><div style=\"font-size:10px;color:var(--t3);font-style:italic;line-height:1.5;margin-bottom:7px\">"+v.ex+"</div>"+(v.origin?"<div style=\"font-size:9px;color:var(--t3);padding-top:7px;border-top:0.5px solid var(--bd)\">Origin: "+v.origin+"</div>":"")+"<div style=\"margin-top:12px;display:flex;gap:5px;flex-wrap:wrap\"><button onclick=\"W.vocabIdx++;renderVocab();openVocabMore()\">Next word &#8599;</button><button onclick=\"saveWord()\">Save to list &#8599;</button><button onclick=\"showWordList()\">My word list &#8599;</button></div>";
+  if(mf)mf.style.display="none";g("p-modal-bg").classList.add("open");
+}
+function saveWord(){var v=W.vocabList[W.vocabIdx%W.vocabList.length];if(!W.wordList.some(function(w){return w.word===v.word;}))W.wordList.push({word:v.word,def:v.def});}
+function showWordList(){
+  var mb=g("p-mod-body"),mt=g("p-mod-title");mt.textContent="My word list";
+  mb.innerHTML=(W.wordList.length?W.wordList.map(function(w){return "<div style=\"padding:5px 0;border-bottom:0.5px solid var(--bd)\"><div style=\"font-family:var(--font-serif);font-size:12px;color:var(--gold)\">"+w.word+"</div><div style=\"font-size:9px;color:var(--t2);margin-top:1px\">"+w.def+"</div></div>";}).join(""):"<div style=\"font-size:10px;color:var(--t3);padding:7px 0\">No words saved yet.</div>")+"<div style=\"margin-top:10px\"><button onclick=\"openVocabMore()\">Back to word</button></div>";
+}
+function addLevelUp(){var name=prompt("Topic name:");if(!name)return;W.levelUpTopics.push({title:name,color:"#888",desc:"",prompt:"Give me a cheat sheet on "+name+" — key ideas, important figures, fascinating facts and how it connects to fashion, culture and creative life."});renderLevelUp();}
+function renderLevelUp(){
+  var html="";W.levelUpTopics.forEach(function(t){html+="<div class=\"sm-box\" onclick=\"alert('Ask Claude: "+t.prompt.replace(/'/g,"\\'")+"\')\">"+"<div><div class=\"sm-box-title\" style=\"color:"+t.color+"\">"+t.title+"</div>"+(t.desc?"<div class=\"sm-box-sub\">"+t.desc+"</div>":"")+"</div><span class=\"sm-box-arrow\">&#8599;</span></div>";});
+  ["levelup-grid","levelup-full"].forEach(function(id){var el=g(id);if(el)el.innerHTML=html;});
+}
+
+function renderSpCard(idx,wId,hId,cId,rId,bId,sId,pId,peId,which){
+  var c=W.spCards[idx%W.spCards.length];
+  if(g(wId))g(wId).textContent=c.word;if(g(hId))g(hId).textContent=c.hint;if(g(cId))g(cId).textContent=c.cat;
+  if(g(rId)){g(rId).style.display="none";g(rId).textContent=c.answer;}
+  if(g(bId))g(bId).innerHTML="<button class=\"sp-btn\" onclick=\"revealSp("+which+")\">Reveal &#8599;</button>";
+  if(g(sId))g(sId).textContent="";
+  if(pId){var pp=c.phrase?{es:c.phrase,en:c.phraseEn}:W.phrases[idx%W.phrases.length];if(g(pId))g(pId).textContent=pp.es;if(g(peId))g(peId).textContent=pp.en;}
+}
+function revealSp(w){
+  var ri=w===1?"sp-reveal":"sp2-reveal",bi=w===1?"sp-btns":"sp2-btns";
+  var sr=g(ri);if(sr)sr.style.display="block";
+  var sb=g(bi);if(sb)sb.innerHTML="<button class=\"sp-btn correct\" onclick=\"markSp("+w+",true)\">Got it</button><button class=\"sp-btn wrong\" onclick=\"markSp("+w+",false)\">Not yet</button>";
+}
+function markSp(w,c){
+  if(w===2){if(c){W.sp2Correct++;W.sp2Streak++;}else W.sp2Streak=0;W.sp2Idx++;W.sp2Total++;}
+  var si=w===1?"sp-score":"sp2-score";var ss=g(si);if(ss)ss.textContent=c?"Excelente!":"Keep practising!";
+  updateSpStats();setTimeout(function(){w===1?nextSp1():nextSp2();},700);
+}
+function nextSp1(){W.sp1Idx++;renderSpCard(W.sp1Idx,"sp-word","sp-hint","sp-cat","sp-reveal","sp-btns","sp-score",null,null,1);}
+function nextSp2(){W.sp2Idx++;renderSpCard(W.sp2Idx,"sp2-word","sp2-hint","sp2-cat","sp2-reveal","sp2-btns","sp2-score","sp2-phrase","sp2-phrase-en",2);updateSpStats();}
+function updateSpStats(){if(g("sp2-streak"))g("sp2-streak").textContent=W.sp2Streak;if(g("sp2-correct"))g("sp2-correct").textContent=W.sp2Correct;if(g("sp2-total"))g("sp2-total").textContent=W.sp2Total;}
+
+function calcSnap(){
+  var eT=W.expenses.reduce(function(s,e){return s+e.amt;},0),dT=W.debts.reduce(function(s,d){return s+(d.balance||0);},0),iT=W.invoices.reduce(function(s,i){return s+parseFloat(i.amount||0);},0);
+  var avg=W.goals.length?Math.round(W.goals.reduce(function(s,gv){return s+gv.progress;},0)/W.goals.length):0;
+  var set=function(id,v){var el=g(id);if(el)el.textContent=v;};
+  set("exp-snap-total","$"+eT.toLocaleString());set("exp-snap-sub",W.expenses.length+" items");
+  set("debt-snap-total","$"+dT.toLocaleString());set("debt-snap-sub",W.debts.length+" debts");
+  set("goals-snap-val",avg+"% avg");set("goals-snap-sub",W.goals.length+" goals");
+  set("inv-snap-total","$"+iT.toLocaleString());set("inv-snap-sub",W.invoices.length+" invoices");
+}
+function renderExpenses(){
+  var cl={fixed:"cat-fixed",variable:"cat-var"},lb={fixed:"Fixed",variable:"Variable"};
+  var html="",total=0;W.expenses.forEach(function(e,i){total+=e.amt;html+="<tr><td>"+e.name+"</td><td><span class=\"cat-pill "+cl[e.cat]+"\">"+lb[e.cat]+"</span></td><td class=\"amt\">$"+e.amt.toLocaleString()+"</td><td><span class=\"del-x\" onclick=\"delExp("+i+")\">x</span></td></tr>";});
+  var eb=g("exp-full");if(eb)eb.innerHTML=html;var et=g("exp-full-total");if(et)et.textContent="$"+total.toLocaleString();calcSnap();
+}
+function delExp(i){W.expenses.splice(i,1);renderExpenses();}
+function renderDebts(){
+  var html="",tb=0,tm=0;W.debts.forEach(function(d,i){tb+=(d.balance||0);tm+=(d.monthly||0);html+="<tr><td>"+d.name+"</td><td class=\"amt\">$"+(d.balance||0).toLocaleString()+"</td><td class=\"amt\">$"+(d.monthly||0).toLocaleString()+"</td><td><span class=\"del-x\" onclick=\"delDebt("+i+")\">x</span></td></tr>";});
+  if(!W.debts.length)html="<tr><td colspan=\"4\" style=\"font-size:9px;color:var(--t3);padding:7px 0\">No debts added yet</td></tr>";
+  var db=g("debt-full");if(db)db.innerHTML=html;var dt=g("debt-bal");if(dt)dt.textContent="$"+tb.toLocaleString();var dm=g("debt-mo");if(dm)dm.textContent="$"+tm.toLocaleString();calcSnap();
+}
+function delDebt(i){W.debts.splice(i,1);renderDebts();}
+function renderInvoices(){
+  var il=g("inv-list");if(!il)return;
+  if(!W.invoices.length){il.innerHTML="<div style=\"font-size:10px;color:var(--t3)\">No invoices yet.</div>";calcSnap();return;}
+  var html="";W.invoices.forEach(function(inv,i){html+="<div class=\"saved-inv\"><div><div style=\"font-size:10px;font-weight:500;color:var(--t1)\">"+inv.client+"</div><div style=\"font-size:8px;color:var(--t3);margin-top:1px\">"+inv.date+" · $"+parseFloat(inv.amount||0).toLocaleString()+" · "+inv.status+"</div></div><span style=\"font-size:7px;color:var(--gold)\">view &#8599;</span></div>";});
+  il.innerHTML=html;calcSnap();
+}
+function renderBooks(){
+  var dc={read:"#4caf50",reading:"#b8975a",want:"#555"},lm={read:"Read",reading:"Reading",want:"Want"};
+  var html="";W.books.forEach(function(b){html+="<div style=\"display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:0.5px solid var(--bd)\"><div style=\"width:6px;height:6px;border-radius:50%;background:"+dc[b.status]+";flex-shrink:0;margin-top:3px\"></div><div style=\"flex:1\"><div style=\"font-size:10px;font-weight:500;color:var(--t1);line-height:1.35\">"+b.title+"</div><div style=\"font-size:8px;color:var(--t3)\">"+b.author+"</div></div><span style=\"font-size:7px;padding:1px 5px;border-radius:8px;font-weight:500;background:rgba(0,0,0,0.1);color:"+dc[b.status]+"\">"+lm[b.status]+"</span></div>";});
+  var el=g("book-list");if(el)el.innerHTML=html;
+}
+function renderLearns(){
+  var html="";W.learns.forEach(function(l){html+="<div style=\"padding:4px 0;border-bottom:0.5px solid var(--bd);cursor:pointer\" onclick=\"alert('Ask Claude: Introduction to "+l.title+" — key concepts and 3 recommended resources')\"><div style=\"font-size:7px;text-transform:uppercase;color:var(--t3)\">"+l.cat+"</div><div style=\"font-size:10px;font-weight:500;color:var(--t1);margin-top:1px\">"+l.title+" &#8599;</div></div>";});
+  var el=g("learn-list");if(el)el.innerHTML=html;
+}
+function renderGoals(){
+  var cc={Work:"#b8975a",Personal:"#4caf50",Finance:"#d4a043",Health:"#5ba3e0",Family:"#7b74dd"};
+  var html="";W.goals.forEach(function(gv){var c=cc[gv.cat]||"#555";html+="<div class=\"goal-card\"><div style=\"font-size:7px;text-transform:uppercase;margin-bottom:3px;font-weight:500;color:"+c+"\">"+gv.cat+"</div><div style=\"font-size:10px;font-weight:500;color:var(--t1);margin-bottom:6px;line-height:1.35\">"+gv.title+"</div><div style=\"display:flex;align-items:center;gap:7px\"><div class=\"prog-bar\" style=\"flex:1\"><div class=\"prog-fill\" style=\"background:"+c+";width:"+Math.round(gv.progress)+"%\"></div></div><span style=\"font-size:8px;color:var(--t3)\">"+Math.round(gv.progress)+"%</span></div></div>";});
+  var gg=g("goals-grid");if(gg)gg.innerHTML=html;calcSnap();
+}
+
+function openPModal(type){
+  var mb=g("p-mod-body"),mt=g("p-mod-title"),ms=g("p-mod-save"),mf=g("p-mod-footer");
+  if(ms)ms.style.display="block";if(mf)mf.style.display="flex";
+  if(type==="expense"){mt.textContent="Add expense";mb.innerHTML="<span class=\"flbl\">Item name</span><input class=\"fi\" id=\"mn\" type=\"text\" placeholder=\"e.g. Rent\"><span class=\"flbl\">Category</span><select class=\"fi\" id=\"mc\"><option value=\"fixed\">Fixed</option><option value=\"variable\">Variable</option></select><span class=\"flbl\">Monthly amount ($)</span><input class=\"fi\" id=\"ma\" type=\"number\" placeholder=\"0\">";ms.onclick=function(){var n=g("mn").value;if(!n)return;W.expenses.push({name:n,cat:g("mc").value,amt:parseFloat(g("ma").value)||0});closePMod();renderExpenses();};}
+  else if(type==="debt"){mt.textContent="Add debt";mb.innerHTML="<span class=\"flbl\">Debt name</span><input class=\"fi\" id=\"dn\" type=\"text\" placeholder=\"e.g. Credit card\"><span class=\"flbl\">Total balance ($)</span><input class=\"fi\" id=\"dbal\" type=\"number\" placeholder=\"0\"><span class=\"flbl\">Monthly repayment ($)</span><input class=\"fi\" id=\"dmon\" type=\"number\" placeholder=\"0\">";ms.onclick=function(){var n=g("dn").value;if(!n)return;W.debts.push({name:n,balance:parseFloat(g("dbal").value)||0,monthly:parseFloat(g("dmon").value)||0});closePMod();renderDebts();};}
+  else if(type==="invoice"){mt.textContent="Create invoice";var today=new Date(),ds=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");mb.innerHTML="<span class=\"flbl\">Client / brand</span><input class=\"fi\" id=\"ic\" type=\"text\" placeholder=\"e.g. Brand X Fashion\"><span class=\"flbl\">Service description</span><textarea class=\"fta\" id=\"idd\" placeholder=\"e.g. Sponsored Instagram post\"></textarea><span class=\"flbl\">Amount ($)</span><input class=\"fi\" id=\"ia\" type=\"number\" placeholder=\"0\"><span class=\"flbl\">Invoice date</span><input class=\"fi\" id=\"idat\" type=\"date\" value=\""+ds+"\"><span class=\"flbl\">Status</span><select class=\"fi\" id=\"ist\"><option>Draft</option><option>Sent</option><option>Paid</option><option>Overdue</option></select>";ms.onclick=function(){var cl=g("ic").value;if(!cl)return;W.invoices.push({client:cl,description:g("idd").value,amount:g("ia").value||0,date:g("idat").value,status:g("ist").value});closePMod();renderInvoices();};}
+  else if(type==="book"){mt.textContent="Add book";mb.innerHTML="<span class=\"flbl\">Title</span><input class=\"fi\" id=\"bt\" type=\"text\" placeholder=\"Book title\"><span class=\"flbl\">Author</span><input class=\"fi\" id=\"ba\" type=\"text\" placeholder=\"Author name\"><span class=\"flbl\">Status</span><select class=\"fi\" id=\"bs\"><option value=\"want\">Want to read</option><option value=\"reading\">Currently reading</option><option value=\"read\">Read</option></select>";ms.onclick=function(){var t=g("bt").value;if(!t)return;W.books.push({title:t,author:g("ba").value||"",status:g("bs").value});closePMod();renderBooks();};}
+  else if(type==="learn"){mt.textContent="Add topic";mb.innerHTML="<span class=\"flbl\">Category</span><input class=\"fi\" id=\"lc\" type=\"text\" placeholder=\"e.g. History\"><span class=\"flbl\">Topic</span><input class=\"fi\" id=\"lt\" type=\"text\" placeholder=\"What do you want to learn?\">";ms.onclick=function(){var t=g("lt").value;if(!t)return;W.learns.push({cat:g("lc").value||"Other",title:t});closePMod();renderLearns();};}
+  else if(type==="goal"){mt.textContent="Add goal";mb.innerHTML="<span class=\"flbl\">Goal</span><input class=\"fi\" id=\"gt\" type=\"text\" placeholder=\"What do you want to achieve?\"><span class=\"flbl\">Category</span><select class=\"fi\" id=\"gc\"><option>Work</option><option>Personal</option><option>Finance</option><option>Health</option><option>Family</option></select><span class=\"flbl\">Progress (%)</span><input class=\"fi\" id=\"gp\" type=\"number\" min=\"0\" max=\"100\" value=\"0\">";ms.onclick=function(){var t=g("gt").value;if(!t)return;W.goals.push({title:t,cat:g("gc").value,progress:parseInt(g("gp").value)||0});closePMod();renderGoals();};}
+  else if(type==="topic_note"||type==="topic_link"){
+    var key=W.activeTopicKey,mode=type==="topic_note"?"note":"link";
+    mt.textContent=(mode==="note"?"Add note":"Add link")+" · "+key.replace("h_","").replace(/_/g," ");
+    if(mode==="note"){mb.innerHTML="<span class=\"flbl\">Note</span><textarea class=\"fta\" id=\"tn\" placeholder=\"Paste text, add thoughts, note a diet plan or workout...\"></textarea>";ms.onclick=function(){var t=g("tn").value;if(!t)return;if(!W.topicData[key])W.topicData[key]={notes:[],links:[]};var now=new Date();W.topicData[key].notes.push({text:t,date:MONTHS[now.getMonth()]+" "+now.getDate()});closePMod();renderTopicBody(key);var b=g("tb-"+key);if(b)b.classList.add("open");};}
+    else{mb.innerHTML="<span class=\"flbl\">Label</span><input class=\"fi\" id=\"ll\" type=\"text\" placeholder=\"e.g. My protein plan\"><span class=\"flbl\">URL</span><input class=\"fi\" id=\"lu\" type=\"url\" placeholder=\"https://...\">";ms.onclick=function(){var u=g("lu").value;if(!u)return;if(!W.topicData[key])W.topicData[key]={notes:[],links:[]};W.topicData[key].links.push({label:g("ll").value||u,url:u});closePMod();renderTopicBody(key);var b=g("tb-"+key);if(b)b.classList.add("open");};}
+  }
+  g("p-modal-bg").classList.add("open");
+}
+function closePMod(e){
+  if(e&&e.target!==g("p-modal-bg"))return;
+  var ms=g("p-mod-save");if(ms)ms.style.display="block";var mf=g("p-mod-footer");if(mf)mf.style.display="flex";
+  g("p-modal-bg").classList.remove("open");
+}
+function showPPage(id,el){
+  document.querySelectorAll("#personal-dash .page").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll("#personal-nav .tnav").forEach(function(t){t.classList.remove("on");});
+  var pg=g(id);if(pg)pg.classList.add("on");if(el)el.classList.add("on");
+}
+
+function init(){
+  buildCal("w",0);buildCal("p",0);buildCards();renderRadar("all");
+  renderWorkTodos();renderWorkQA();buildKanban();renderIdeas("all");renderPartners();renderPitches();
+  renderPTodos();renderQA("org");renderQA("fin");
+  renderExpenses();renderDebts();renderInvoices();calcSnap();
+  renderBooks();renderLearns();renderLevelUp();renderVocab();
+  renderSpCard(0,"sp-word","sp-hint","sp-cat","sp-reveal","sp-btns","sp-score",null,null,1);
+  renderSpCard(0,"sp2-word","sp2-hint","sp2-cat","sp2-reveal","sp2-btns","sp2-score","sp2-phrase","sp2-phrase-en",2);
+  renderGoals();updatePMPlat();
+}
+init();
+</script>
+</body>
+</html>
