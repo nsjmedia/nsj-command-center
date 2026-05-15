@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NSJ Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream:   #F5F0E8;
+      --paper:   #FFFAF2;
+      --ink:     #111111;
+      --muted:   #6B6258;
+      --line:    #DDD5C4;
+      --soft:    #EDE6D9;
+      --gold:    #B8953A;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 32px 60px;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 22px;
+    }
+
+    .kicker {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+
+    .topbar h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .topbar-sub {
+      font-size: 17px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-weight: 300;
+    }
+
+    .topbar-tag {
+      font-size: 17px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 300;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 22px 0 28px;
+    }
+
+    .nav-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .nav-pill:hover { border-color: var(--gold); color: var(--ink); }
+    .nav-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.55fr 0.72fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .left-col { display: flex; flex-direction: column; gap: 18px; }
+    .right-col { display: flex; flex-direction: column; gap: 18px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: rgba(255,250,242,0.82);
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      padding: 22px 24px;
+      box-shadow: 0 12px 36px rgba(42,33,22,0.05);
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 400;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(22px, 2.2vw, 32px);
+      font-weight: 400;
+      letter-spacing: -0.03em;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .pill-tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+      font-weight: 400;
+    }
+
+    /* ── WEEK GRID ── */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .week-panel {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 19px;
+      font-weight: 400;
+    }
+
+    .panel-action {
+      font-size: 11px;
+      color: var(--gold);
+      cursor: pointer;
+      font-weight: 400;
+    }
+
+    .panel-action:hover { text-decoration: underline; }
+
+    /* ── TASKS ── */
+    .task-list { display: flex; flex-direction: column; gap: 7px; }
+
+    .task-item {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+
+    .task-check {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 1px;
+      background: var(--paper);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .task-item.done .task-check { background: var(--ink); border-color: var(--ink); }
+    .task-item.done .task-check::after { content: '✓'; font-size: 9px; color: var(--paper); }
+
+    .task-text { font-size: 13px; color: #443A32; line-height: 1.4; font-weight: 300; }
+    .task-item.done .task-text { text-decoration: line-through; opacity: 0.45; }
+
+    /* ── CALENDAR ── */
+    .cal-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .cal-row {
+      font-size: 13px;
+      color: #443A32;
+      padding: 4px 6px;
+      border-radius: 6px;
+      font-weight: 300;
+    }
+
+    .cal-row:hover { background: rgba(0,0,0,0.03); }
+    .cal-day { font-weight: 500; color: var(--ink); font-size: 12px; }
+
+    /* ── PLATFORM GRID ── */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .platform-card {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .platform-card:hover {
+      border-color: var(--gold);
+      box-shadow: 0 4px 16px rgba(184,149,58,0.1);
+    }
+
+    .platform-icon { font-size: 22px; margin-bottom: 10px; }
+
+    .platform-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 5px;
+    }
+
+    .platform-desc { font-size: 12px; color: var(--muted); line-height: 1.45; font-weight: 300; }
+
+    /* ── POST LIST ── */
+    .post-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+    .post-entry {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 16px;
+      cursor: pointer;
+    }
+
+    .post-entry:hover { border-color: var(--gold); }
+
+    .post-entry-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 2px;
+    }
+
+    .post-entry-meta { font-size: 11px; color: var(--gold); letter-spacing: 0.1em; margin-bottom: 6px; font-weight: 400; }
+    .post-entry-copy { font-size: 12.5px; color: var(--muted); font-weight: 300; line-height: 1.45; }
+
+    /* ── FEED ── */
+    .feed { display: flex; flex-direction: column; gap: 10px; }
+
+    .feed-entry {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 15px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .feed-entry:hover { border-color: var(--gold); }
+
+    .feed-entry-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .feed-source { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+    .feed-tag { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; font-weight: 400; }
+    .feed-text { font-size: 13px; color: #443A32; line-height: 1.5; font-weight: 300; }
+
+    /* ── SEARCH ── */
+    .search-input {
+      width: 100%;
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 16px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      font-weight: 300;
+      transition: border-color 0.15s;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--gold); }
+
+    .search-btns { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* ── AI ── */
+    .ai-textarea {
+      width: 100%;
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 16px;
+      font-family: 'Jost', sans-serif;
+      font-size: 12.5px;
+      color: var(--ink);
+      outline: none;
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.55;
+      font-weight: 300;
+      transition: border-color 0.15s;
+    }
+
+    .ai-textarea::placeholder { color: var(--muted); }
+    .ai-textarea:focus { border-color: var(--gold); }
+
+    .ai-pills { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }
+
+    .ai-pill {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 300;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .ai-pill:hover { border-color: var(--gold); color: var(--ink); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 18px;
+      transition: all 0.15s;
+    }
+
+    .btn-dark { background: var(--ink); color: var(--paper); border: 1px solid var(--ink); }
+    .btn-dark:hover { background: #2a2218; }
+    .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-full { width: 100%; }
+
+    /* ── DIALOGS ── */
+    dialog {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      max-width: 700px;
+      width: calc(100% - 40px);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+      font-family: 'Jost', sans-serif;
+      color: var(--ink);
+    }
+
+    dialog::backdrop { background: rgba(0,0,0,0.22); backdrop-filter: blur(3px); }
+
+    dialog h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 400;
+      margin-bottom: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+
+    .form-field label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px 14px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      font-weight: 300;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus { border-color: var(--gold); }
+
+    .form-field textarea { min-height: 90px; resize: vertical; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1050px) {
+      .grid { grid-template-columns: 1fr; }
+      .week-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 18px; }
+      .platform-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="topbar">
+      <p class="kicker">The New Front Row</p>
+      <h1>NSJ Command Center</h1>
+      <p class="topbar-sub">Started at Vogue. Now reporting live from the front row of real life.</p>
+      <p class="topbar-tag">Style, Storytelling &amp; Sh*t We Need to Talk About.</p>
+    </header>
+
+    <nav class="nav">
+      <span class="nav-pill active">Dashboard</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-cms').scrollIntoView({behavior:'smooth'})">Content Calendar</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-cms').scrollIntoView({behavior:'smooth'})">Publishing Database</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-news').scrollIntoView({behavior:'smooth'})">News &amp; Intel</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-sidekick').scrollIntoView({behavior:'smooth'})">Sidekick</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-assets').scrollIntoView({behavior:'smooth'})">Media Library</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-assets').scrollIntoView({behavior:'smooth'})">Contacts</span>
+      <span class="nav-pill" onclick="document.getElementById('sec-assets').scrollIntoView({behavior:'smooth'})">Brand Vault</span>
+    </nav>
+
+    <div class="grid">
+
+      <!-- LEFT -->
+      <div class="left-col">
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Content Dashboard</p>
+              <h2 class="card-title">The New Front Row</h2>
+            </div>
+            <span class="pill-tag">Week at a Glance</span>
+          </div>
+
+          <div class="week-grid">
+            <div class="week-panel">
+              <div class="panel-head">
+                <span class="panel-title">To Do List</span>
+                <span class="panel-action" onclick="openTaskDialog()">+ add</span>
+              </div>
+              <div class="task-list" id="taskList"></div>
+            </div>
+
+            <div class="week-panel">
+              <div class="panel-head">
+                <span class="panel-title">NSJ Calendar</span>
+                <span class="panel-action" onclick="openCalendarDialog('nsj')">open</span>
+              </div>
+              <div class="cal-list" id="nsjCalendar"></div>
+            </div>
+
+            <div class="week-panel">
+              <div class="panel-head">
+                <span class="panel-title">TNFR Calendar</span>
+                <span class="panel-action" onclick="openCalendarDialog('tnfr')">open</span>
+              </div>
+              <div class="cal-list" id="tnfrCalendar"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="sec-cms">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Content Management System</p>
+              <h2 class="card-title">Substack &amp; Social Media</h2>
+            </div>
+            <button class="btn btn-outline" onclick="openPostDialog()">Open Content Calendar</button>
+          </div>
+
+          <div class="platform-grid">
+            <div class="platform-card" onclick="openPostDialog('Substack')"><div class="platform-icon">✉️</div><div class="platform-name">Substack</div><div class="platform-desc">Article, newsletter, Notes, drafts, URLs, images, publishing calendar.</div></div>
+            <div class="platform-card" onclick="openPostDialog('Instagram')"><div class="platform-icon">📸</div><div class="platform-name">Instagram</div><div class="platform-desc">Captions, carousels, reels, stories, image/video assets.</div></div>
+            <div class="platform-card" onclick="openPostDialog('Facebook')"><div class="platform-icon">👥</div><div class="platform-name">Facebook</div><div class="platform-desc">Community posts, reposts, links, commentary, and publishing notes.</div></div>
+            <div class="platform-card" onclick="openPostDialog('LinkedIn')"><div class="platform-icon">💼</div><div class="platform-name">LinkedIn</div><div class="platform-desc">Professional essays, opinion posts, career/storytelling angles.</div></div>
+            <div class="platform-card" onclick="openPostDialog('Reddit')"><div class="platform-icon">👽</div><div class="platform-name">Reddit</div><div class="platform-desc">Discussion starters, community research, sentiment and trend language.</div></div>
+            <div class="platform-card" onclick="openPostDialog('TikTok')"><div class="platform-icon">🎥</div><div class="platform-name">TikTok</div><div class="platform-desc">Short-form scripts, hooks, video ideas, captions, and links.</div></div>
+            <div class="platform-card" onclick="openPostDialog('Pinterest')"><div class="platform-icon">📌</div><div class="platform-name">Pinterest</div><div class="platform-desc">Pin concepts, image boards, style references, traffic-driving ideas.</div></div>
+            <div class="platform-card" onclick="openPostDialog('BlueSky / X')"><div class="platform-icon">🦋</div><div class="platform-name">BlueSky / X</div><div class="platform-desc">Fast takes, culture commentary, threads, and conversation monitoring.</div></div>
+            <div class="platform-card" onclick="openPostDialog('ShopMy')"><div class="platform-icon">🛍️</div><div class="platform-name">ShopMy</div><div class="platform-desc">Affiliate picks, storefront ideas, product links, and commercial content.</div></div>
+          </div>
+
+          <div class="post-list" id="postDatabase"></div>
+        </section>
+
+        <section class="card" id="sec-assets">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Command Center</p>
+              <h2 class="card-title">Assets &amp; Apps</h2>
+            </div>
+          </div>
+
+          <div class="platform-grid" style="grid-template-columns:repeat(4,1fr);">
+            <div class="platform-card" onclick="openAssetDialog('Media')"><div class="platform-icon">🖼️</div><div class="platform-name">Media</div><div class="platform-desc">Images, video, screenshots, clips, and visual assets.</div></div>
+            <div class="platform-card" onclick="openAssetDialog('Ideas')"><div class="platform-icon">💡</div><div class="platform-name">Ideas</div><div class="platform-desc">Story concepts, headlines, angles, and future posts.</div></div>
+            <div class="platform-card" onclick="openAssetDialog('Pitches')"><div class="platform-icon">📝</div><div class="platform-name">Pitches</div><div class="platform-desc">Media pitches, outlet ideas, follow-ups, and status.</div></div>
+            <div class="platform-card" onclick="openAssetDialog('Contacts')"><div class="platform-icon">📇</div><div class="platform-name">Contacts</div><div class="platform-desc">PR, editors, brand partners, collaborators, and notes.</div></div>
+            <div class="platform-card" onclick="openAssetDialog('Branding')"><div class="platform-icon">🏛️</div><div class="platform-name">Branding</div><div class="platform-desc">Logo, strategy, voice, style guide, and media kit.</div></div>
+            <div class="platform-card" onclick="window.open('https://drive.google.com','_blank')"><div class="platform-icon">🟦</div><div class="platform-name">Google</div><div class="platform-desc">Drive, Docs, Sheets, Photos, Calendar, and Gmail.</div></div>
+            <div class="platform-card" onclick="window.open('https://zoom.us','_blank')"><div class="platform-icon">🎥</div><div class="platform-name">Zoom</div><div class="platform-desc">Calls, interviews, recordings, meetings, and links.</div></div>
+            <div class="platform-card" onclick="openAssetDialog('Apps')"><div class="platform-icon">🧰</div><div class="platform-name">Apps</div><div class="platform-desc">Canva, Slack, AI tools, analytics, and utilities.</div></div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-col">
+
+        <section class="card" style="padding:18px 20px;">
+          <h2 class="card-title" style="font-size:22px;margin-bottom:12px;">Search</h2>
+          <input id="searchInput" class="search-input"
+            placeholder="Search Google, AI, Drive, Docs, drafts, ideas, contacts, media…"
+            onkeydown="if(event.key==='Enter') searchGoogle()" />
+          <div class="search-btns">
+            <button class="btn btn-dark" onclick="searchGoogle()">Google</button>
+            <button class="btn btn-outline" onclick="searchLocal()">Search This Page</button>
+          </div>
+        </section>
+
+        <section class="card" id="sec-news">
+          <div class="section-head" style="margin-bottom:16px;">
+            <div>
+              <p class="eyebrow">Radar Desk</p>
+              <h2 class="card-title">News &amp; Intel</h2>
+            </div>
+          </div>
+
+          <div class="feed">
+            <div class="feed-entry" onclick="window.open('https://www.vogue.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Vogue</span><span class="feed-tag">Live</span></div><p class="feed-text">Style, beauty, celebrity, fashion, and culture stories worth watching.</p></div>
+            <div class="feed-entry" onclick="window.open('https://www.nytimes.com/section/fashion','_blank')"><div class="feed-entry-head"><span class="feed-source">NYT Style</span><span class="feed-tag">New</span></div><p class="feed-text">Culture, identity, relationships, and style pieces to track for angles.</p></div>
+            <div class="feed-entry" onclick="window.open('https://www.businessoffashion.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Business of Fashion</span><span class="feed-tag">Signal</span></div><p class="feed-text">Luxury market shifts, fashion industry trends, and consumer behavior.</p></div>
+            <div class="feed-entry" onclick="window.open('https://www.thecut.com','_blank')"><div class="feed-entry-head"><span class="feed-source">The Cut</span><span class="feed-tag">Culture</span></div><p class="feed-text">Conversations around identity, relationships, women, and modern life.</p></div>
+            <div class="feed-entry" onclick="window.open('https://trends.google.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Google Trends</span><span class="feed-tag">+38%</span></div><p class="feed-text">Rising searches around personal style, reinvention, longevity, and midlife.</p></div>
+            <div class="feed-entry" onclick="window.open('https://en.wikipedia.org/wiki/Main_Page','_blank')"><div class="feed-entry-head"><span class="feed-source">Wikipedia</span><span class="feed-tag">Trending</span></div><p class="feed-text">Top searches and cultural spikes that may become story ideas.</p></div>
+            <div class="feed-entry" onclick="window.open('https://www.reddit.com/r/femalefashionadvice','_blank')"><div class="feed-entry-head"><span class="feed-source">Reddit</span><span class="feed-tag">Hot</span></div><p class="feed-text">Relationship discourse, beauty trends, and anti-hustle conversations.</p></div>
+            <div class="feed-entry" onclick="window.open('https://www.pinterest.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Pinterest</span><span class="feed-tag">Trend</span></div><p class="feed-text">Quiet luxury, capsule wardrobe, and elevated basics continuing upward.</p></div>
+            <div class="feed-entry" onclick="window.open('https://substack.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Substack</span><span class="feed-tag">Growth</span></div><p class="feed-text">Strong engagement around identity, culture, reinvention, and media criticism.</p></div>
+            <div class="feed-entry" onclick="window.open('https://thenewfrontrow.com','_blank')"><div class="feed-entry-head"><span class="feed-source">Analytics</span><span class="feed-tag">Signal</span></div><p class="feed-text">Your strongest content themes, traffic sources, reads, saves, and shares.</p></div>
+          </div>
+        </section>
+
+        <section class="card" id="sec-sidekick">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div>
+              <p class="eyebrow">Sidekick</p>
+              <h2 class="card-title">AI Workspace</h2>
+            </div>
+          </div>
+
+          <textarea id="aiPrompt" class="ai-textarea"
+            placeholder="Ask Claude, ChatGPT, or Gemini. Open your Claude brand project, generate captions, summarize trends, rewrite copy, plan the week, or turn one Substack into ten social posts…"></textarea>
+
+          <div class="ai-pills">
+            <span class="ai-pill" onclick="openAI('claude')">Claude</span>
+            <span class="ai-pill" onclick="openAI('chatgpt')">ChatGPT</span>
+            <span class="ai-pill" onclick="openAI('gemini')">Gemini</span>
+            <span class="ai-pill" onclick="openAI('claude')">Claude Brand Project</span>
+          </div>
+
+          <button class="btn btn-dark btn-full" onclick="copyPrompt()">Copy Prompt</button>
+        </section>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DIALOGS -->
+  <dialog id="taskDialog">
+    <h2>Add To-Do</h2>
+    <div class="form-field">
+      <label>Task</label>
+      <input id="newTask" placeholder="What needs doing…" onkeydown="if(event.key==='Enter') addTask()" />
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" onclick="closeDialog('taskDialog')">Cancel</button>
+      <button class="btn btn-dark" onclick="addTask()">Add Task</button>
+    </div>
+  </dialog>
+
+  <dialog id="calendarDialog">
+    <h2 id="calendarDialogTitle">Edit Calendar</h2>
+    <div id="calendarEditor"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" onclick="closeDialog('calendarDialog')">Cancel</button>
+      <button class="btn btn-dark" onclick="saveCalendar()">Save</button>
+    </div>
+  </dialog>
+
+  <dialog id="postDialog">
+    <h2>Add Content Post</h2>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Platform</label>
+        <select id="postPlatform">
+          <option>Substack</option><option>Instagram</option><option>Facebook</option>
+          <option>LinkedIn</option><option>Reddit</option><option>TikTok</option>
+          <option>Pinterest</option><option>BlueSky / X</option><option>ShopMy</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Publish Date</label>
+        <input id="postDate" type="date" />
+      </div>
+    </div>
+    <div class="form-field"><label>Title / Headline</label><input id="postTitle" placeholder="Title…" /></div>
+    <div class="form-field"><label>Copy / Draft</label><textarea id="postCopy" placeholder="Copy, caption, or draft notes…"></textarea></div>
+    <div class="form-field"><label>URL / Source / Draft Link</label><input id="postUrl" placeholder="https://…" /></div>
+    <div class="form-field"><label>Media / Drive Link</label><input id="postMedia" placeholder="Image, video, or Drive link…" /></div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" onclick="closeDialog('postDialog')">Cancel</button>
+      <button class="btn btn-dark" onclick="addPost()">Save Post</button>
+    </div>
+  </dialog>
+
+  <dialog id="assetDialog">
+    <h2 id="assetTitle">Asset</h2>
+    <div class="form-field"><label>Name / Title</label><input id="assetName" placeholder="Name…" /></div>
+    <div class="form-field"><label>URL / Link</label><input id="assetUrl" placeholder="https://…" /></div>
+    <div class="form-field"><label>Notes</label><textarea id="assetNotes" placeholder="Notes, context, status…"></textarea></div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" onclick="closeDialog('assetDialog')">Cancel</button>
+      <button class="btn btn-dark" onclick="addAsset()">Save</button>
+    </div>
+    <div id="assetList" class="post-list"></div>
+  </dialog>
+
+  <script>
+    const STORAGE_KEY = "nsj_cc_v3";
+    const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    let currentCalendar = "nsj";
+    let currentAssetType = "Media";
+
+    const defaultData = {
+      tasks: [
+        { text: "Finish Substack article", done: false },
+        { text: "Write newsletter intro", done: false },
+        { text: "Draft four Notes", done: false },
+        { text: "Pull Vogue / NYT refs", done: false },
+        { text: "Upload media assets", done: false },
+        { text: "Prep LinkedIn post", done: false },
+        { text: "Update partner list", done: false }
+      ],
+      calendars: {
+        nsj: ["Draft","Calls","Write","Batch","Review","Admin","Publish"],
+        tnfr: ["Post","Draft","Note","Post","Draft","Prep","Publish"]
+      },
+      posts: [
+        { platform: "Substack", date: "", title: "Sunday essay", copy: "Draft the weekly article.", url: "", media: "" },
+        { platform: "Instagram", date: "", title: "Carousel idea", copy: "Repurpose the essay into 6 slides.", url: "", media: "" }
+      ],
+      assets: { Media:[], Ideas:[], Pitches:[], Contacts:[], Branding:[], Apps:[] }
+    };
+
+    function loadData() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData; }
+      catch { return defaultData; }
+    }
+
+    let data = loadData();
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+    function esc(s) {
+      return String(s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+    }
+
+    function renderTasks() {
+      const el = document.getElementById("taskList");
+      el.innerHTML = "";
+      data.tasks.slice(0,7).forEach((t,i) => {
+        const d = document.createElement("div");
+        d.className = "task-item" + (t.done ? " done" : "");
+        d.innerHTML = `<span class="task-check"></span><span class="task-text">${esc(t.text)}</span>`;
+        d.onclick = () => { data.tasks[i].done = !data.tasks[i].done; saveData(); renderTasks(); };
+        el.appendChild(d);
+      });
+    }
+
+    function openTaskDialog() {
+      document.getElementById("newTask").value = "";
+      document.getElementById("taskDialog").showModal();
+    }
+
+    function addTask() {
+      const v = document.getElementById("newTask").value.trim();
+      if (v) { data.tasks.unshift({ text:v, done:false }); saveData(); renderTasks(); }
+      closeDialog("taskDialog");
+    }
+
+    function renderCalendars() {
+      ["nsj","tnfr"].forEach(type => {
+        const el = document.getElementById(type + "Calendar");
+        el.innerHTML = "";
+        (data.calendars[type]||[]).forEach((item,i) => {
+          const d = document.createElement("div");
+          d.className = "cal-row";
+          d.innerHTML = `<span class="cal-day">${DAYS[i]}</span> — ${esc(item)}`;
+          el.appendChild(d);
+        });
+      });
+    }
+
+    function openCalendarDialog(type) {
+      currentCalendar = type;
+      document.getElementById("calendarDialogTitle").textContent =
+        type === "nsj" ? "Edit NSJ Calendar" : "Edit TNFR Calendar";
+      const editor = document.getElementById("calendarEditor");
+      editor.innerHTML = "";
+      DAYS.forEach((day,i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "form-field";
+        wrap.innerHTML = `<label>${day}</label><input id="cal_${i}" value="${esc(data.calendars[type][i]||"")}" placeholder="${day}…" />`;
+        editor.appendChild(wrap);
+      });
+      document.getElementById("calendarDialog").showModal();
+    }
+
+    function saveCalendar() {
+      data.calendars[currentCalendar] = DAYS.map((_,i) => document.getElementById("cal_"+i).value.trim());
+      saveData(); renderCalendars(); closeDialog("calendarDialog");
+    }
+
+    function renderPosts() {
+      const el = document.getElementById("postDatabase");
+      el.innerHTML = "";
+      data.posts.slice(0,6).forEach((p,i) => {
+        const d = document.createElement("div");
+        d.className = "post-entry";
+        d.innerHTML = `
+          <div class="post-entry-meta">${esc(p.platform)}${p.date?" · "+esc(p.date):""}</div>
+          <div class="post-entry-title">${esc(p.title||"Untitled")}</div>
+          <p class="post-entry-copy">${esc(p.copy||"")}</p>
+          ${p.url?`<p style="font-size:11px;color:var(--gold);margin-top:4px;">${esc(p.url)}</p>`:""}
+        `;
+        d.ondblclick = () => { data.posts.splice(i,1); saveData(); renderPosts(); };
+        el.appendChild(d);
+      });
+    }
+
+    function openPostDialog(platform) {
+      document.getElementById("postPlatform").value = platform || "Substack";
+      ["postDate","postTitle","postCopy","postUrl","postMedia"].forEach(id =>
+        document.getElementById(id).value = "");
+      document.getElementById("postDialog").showModal();
+    }
+
+    function addPost() {
+      data.posts.unshift({
+        platform: document.getElementById("postPlatform").value,
+        date: document.getElementById("postDate").value,
+        title: document.getElementById("postTitle").value.trim(),
+        copy: document.getElementById("postCopy").value.trim(),
+        url: document.getElementById("postUrl").value.trim(),
+        media: document.getElementById("postMedia").value.trim()
+      });
+      saveData(); renderPosts(); closeDialog("postDialog");
+    }
+
+    function openAssetDialog(type) {
+      currentAssetType = type;
+      document.getElementById("assetTitle").textContent = type;
+      ["assetName","assetUrl","assetNotes"].forEach(id =>
+        document.getElementById(id).value = "");
+      renderAssets();
+      document.getElementById("assetDialog").showModal();
+    }
+
+    function addAsset() {
+      if (!data.assets[currentAssetType]) data.assets[currentAssetType] = [];
+      data.assets[currentAssetType].unshift({
+        name: document.getElementById("assetName").value.trim(),
+        url: document.getElementById("assetUrl").value.trim(),
+        notes: document.getElementById("assetNotes").value.trim()
+      });
+      saveData(); renderAssets();
+    }
+
+    function renderAssets() {
+      const el = document.getElementById("assetList");
+      el.innerHTML = "";
+      (data.assets[currentAssetType]||[]).forEach(a => {
+        const d = document.createElement("div");
+        d.className = "post-entry";
+        d.innerHTML = `
+          <div class="post-entry-title">${esc(a.name||"Untitled")}</div>
+          ${a.url?`<p style="font-size:11px;color:var(--gold);margin:3px 0;">${esc(a.url)}</p>`:""}
+          <p class="post-entry-copy">${esc(a.notes||"")}</p>
+        `;
+        if (a.url) d.onclick = () => window.open(a.url,"_blank");
+        el.appendChild(d);
+      });
+    }
+
+    function closeDialog(id) { document.getElementById(id).close(); }
+
+    function openAI(which) {
+      const urls = { claude:"https://claude.ai", chatgpt:"https://chatgpt.com", gemini:"https://gemini.google.com" };
+      window.open(urls[which],"_blank");
+    }
+
+    function copyPrompt() {
+      const t = document.getElementById("aiPrompt").value;
+      navigator.clipboard.writeText(t||"").then(() => alert("Prompt copied to clipboard."));
+    }
+
+    function searchGoogle() {
+      const q = document.getElementById("searchInput").value.trim();
+      if (q) window.open("https://www.google.com/search?q="+encodeURIComponent(q),"_blank");
+    }
+
+    function searchLocal() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      if (!q) return;
+      alert(document.body.innerText.toLowerCase().includes(q) ?
+        "✓ Found on this page." : "No match found on this page.");
+    }
+
+    renderTasks();
+    renderCalendars();
+    renderPosts();
+  </script>
+</body>
+</html>
