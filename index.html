@@ -1335,32 +1335,38 @@ const RADAR_OUTLETS=[
 function loadRadar(){
   const box=document.getElementById("radList");
   box.innerHTML=RADAR_OUTLETS.map((o,i)=>`<div class="rad-outlet"><div class="rad-hd">${esc(o.name)}<a href="${o.site}" target="_blank">Open ↗</a></div><div id="rad-${i}"><div class="rad-loading">Loading…</div></div></div>`).join("");
-  RADAR_OUTLETS.forEach((o,i)=>fetchOutlet(o,i));
+  RADAR_OUTLETS.forEach((o,i)=>setTimeout(()=>fetchOutlet(o,i,false), i*300));
 }
 function renderRadItems(i,o,items){
   const t=document.getElementById("rad-"+i); if(!t)return;
   if(items&&items.length) t.innerHTML=items.slice(0,5).map(it=>`<a class="rad-item" href="${it.link}" target="_blank">${esc(it.title)}</a>`).join("");
   else t.innerHTML=`<a class="rad-item" href="${o.site}" target="_blank">Open ${esc(o.name)} ↗</a>`;
 }
-function fetchOutlet(o,i){
+function fetchOutlet(o,i,retry){
   const target=document.getElementById("rad-"+i); if(!target)return;
-  if(o.type==="wikipedia"){ fetchWiki(o,i); return; }
+  if(o.type==="wikipedia"){ fetchWiki(o,i,retry); return; }
   fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(o.feed)}`)
     .then(r=>r.json())
-    .then(j=>{ renderRadItems(i,o,(j&&j.status==="ok"&&j.items&&j.items.length)?j.items.map(it=>({title:it.title,link:it.link})):o.fallback); })
-    .catch(()=>renderRadItems(i,o,o.fallback));
+    .then(j=>{
+      if(j&&j.status==="ok"&&j.items&&j.items.length){ renderRadItems(i,o,j.items.map(it=>({title:it.title,link:it.link}))); }
+      else if(!retry){ setTimeout(()=>fetchOutlet(o,i,true), 2600); }
+      else { renderRadItems(i,o,o.fallback); }
+    })
+    .catch(()=>{ if(!retry) setTimeout(()=>fetchOutlet(o,i,true),2600); else renderRadItems(i,o,o.fallback); });
 }
-function fetchWiki(o,i){
+function fetchWiki(o,i,retry){
   const d=new Date(); d.setDate(d.getDate()-1);
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
-  fetch(`https://en.wikipedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${y}/${m}/${day}`)
+  fetch(`https://api.wikimedia.org/feed/v1/wikipedia/en/featured/${y}/${m}/${day}`)
     .then(r=>r.json())
     .then(j=>{
-      const arts=(j&&j.items&&j.items[0]&&j.items[0].articles)||[];
-      const items=arts.filter(a=>a.article && !a.article.includes(":") && a.article!=="Main_Page")
-        .slice(0,6).map(a=>({title:a.article.replace(/_/g," "),link:"https://en.wikipedia.org/wiki/"+encodeURIComponent(a.article)}));
-      renderRadItems(i,o,items);
-    }).catch(()=>renderRadItems(i,o,o.fallback));
+      const arts=(j&&j.mostread&&j.mostread.articles)||[];
+      const items=arts.filter(a=>a.normalizedtitle && !a.normalizedtitle.startsWith("Special:") && a.title!=="Main_Page")
+        .slice(0,6).map(a=>({title:a.normalizedtitle, link:(a.content_urls&&a.content_urls.desktop&&a.content_urls.desktop.page)||("https://en.wikipedia.org/wiki/"+encodeURIComponent(a.title))}));
+      if(items.length) renderRadItems(i,o,items);
+      else if(!retry) setTimeout(()=>fetchWiki(o,i,true),2600);
+      else renderRadItems(i,o,o.fallback);
+    }).catch(()=>{ if(!retry) setTimeout(()=>fetchWiki(o,i,true),2600); else renderRadItems(i,o,o.fallback); });
 }
 
 /* ============ AI SIDEKICK (launcher + prompt builder) ============ */
