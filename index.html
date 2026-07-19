@@ -1345,7 +1345,7 @@ function renderRadItems(i,o,items){
 function fetchOutlet(o,i){
   const target=document.getElementById("rad-"+i); if(!target)return;
   if(o.type==="wikipedia"){ fetchWiki(o,i); return; }
-  fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(o.feed)}&count=5`)
+  fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(o.feed)}`)
     .then(r=>r.json())
     .then(j=>{ renderRadItems(i,o,(j&&j.status==="ok"&&j.items&&j.items.length)?j.items.map(it=>({title:it.title,link:it.link})):o.fallback); })
     .catch(()=>renderRadItems(i,o,o.fallback));
