@@ -160,6 +160,14 @@
   .tags{font-size:12.5px;color:var(--scheduled);letter-spacing:.02em;word-spacing:.1em;margin-top:4px}
   .fi{width:100%;background:var(--black);border:1px solid var(--line2);color:var(--cream);font-size:13px;padding:9px 11px;border-radius:4px}
   .fi:focus{outline:none;border-color:var(--gold)}
+  .addcal-one{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+  .addcal-one #ac-title{flex:1 1 auto !important;min-width:0;width:auto !important}
+  .addcal-one #ac-date{flex:0 0 118px !important;width:118px !important}
+  .addcal-one #ac-date{flex:0 0 116px !important;width:116px !important}
+  .addcal-one #ac-time{flex:0 0 118px !important;width:118px !important}
+  .addcal-one .upbtn{flex:0 0 auto;white-space:nowrap}
+  .evdel{background:none;border:none;color:var(--ink);cursor:pointer;font-size:15px;line-height:1;padding:0 3px;margin-left:auto}
+  .evdel:hover{color:var(--gold)}
   .fta{width:100%;background:var(--black);border:1px solid var(--line2);color:var(--cream);font-size:13px;padding:9px 11px;border-radius:4px;min-height:64px;resize:vertical;line-height:1.5}
   .fta:focus{outline:none;border-color:var(--gold)}
   .inline-save{display:flex;gap:8px;margin-top:7px}
@@ -384,7 +392,8 @@
       <div class="addcal-one">
         <input class="fi" id="ac-title" type="text" placeholder="What is it?" onkeydown="if(event.key==='Enter')addToCal()">
         <input class="fi" id="ac-date" type="date">
-        <button class="upbtn" onclick="addToCal()">Add</button>
+        <input class="fi" id="ac-time" type="time">
+        <button class="upbtn" id="ac-btn" onclick="addToCal()">Add</button>
       </div>
 
       <div class="cal-lblrow" style="margin-top:18px">
@@ -1037,7 +1046,7 @@ function loadUEvents(){ return lget("nsjhq_events",[]); }
 function saveUEvents(a){ lset("nsjhq_events",a); }
 function loadDismiss(){ return lget("nsjhq_bdismiss",{}); }
 function saveDismiss(d){ lset("nsjhq_bdismiss",d); }
-function allEvents(){ return EVENTS.concat(loadUEvents()); }
+function allEvents(){ return loadUEvents(); }
 
 let calCollapsed=false;
 function toggleCal(){ calCollapsed=!calCollapsed; lset("nsjhq_calcol",calCollapsed); applyCalCollapse(); }
@@ -1052,14 +1061,14 @@ function renderDaily(){
   renderBrief(); renderDailyCal(); renderDesk(); renderPersonal(); applyCalCollapse(); applyPerCollapse();
 }
 function renderBrief(){
-  const today=lstr(new Date()); const dis=(loadDismiss()[today]||[]);
-  const items=allEvents().filter(e=>e.date===today && !dis.includes(e.id)).sort((a,b)=>a.start.localeCompare(b.start));
+  const today=lstr(new Date());
+  const items=loadUEvents().filter(e=>e.date===today).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
   const box=document.getElementById("briefList");
-  box.innerHTML = items.length ? items.map(e=>`<label class="brief-row">
-    <input type="checkbox" onchange="dismissBrief('${e.id}')">
-    <span class="bt">${fmtTime(e.start)}</span>
-    <span class="btitle">${esc(e.title)}${e.loc?` <span class="bloc">· ${esc(e.loc)}</span>`:""}</span></label>`).join("")
-    : `<div class="brief-empty">Nothing on today. (A rare and beautiful thing.)</div>`;
+  box.innerHTML = items.length ? items.map(e=>`<div class="brief-row">
+    <span class="bt">${e.start?fmtTime(e.start):"all day"}</span>
+    <span class="btitle" onclick="editEvent('${e.id}')" style="cursor:pointer" title="Click to edit">${esc(e.title)}${e.loc?` <span class="bloc">· ${esc(e.loc)}</span>`:""}</span>
+    <button class="evdel" onclick="delEvent('${e.id}')" title="Delete">×</button></div>`).join("")
+    : `<div class="brief-empty">All Clear</div>`;
 }
 function dismissBrief(id){ const today=lstr(new Date()); const d=loadDismiss(); d[today]=[...(d[today]||[]),id]; saveDismiss(d); setTimeout(renderBrief,170); }
 
@@ -1077,9 +1086,9 @@ function renderDailyCal(){
     const mon=new Date(now); mon.setDate(now.getDate()-dow+calOff*7); mon.setHours(0,0,0,0);
     let h="";
     for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const ds=lstr(d);
-      const items=ev.filter(e=>e.date===ds).sort((a,b)=>a.start.localeCompare(b.start));
+      const items=ev.filter(e=>e.date===ds).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
       h+=`<div class="cwrow ${ds===todayStr?'ctoday':''}"><div class="cwday">${d.toLocaleDateString("en-US",{weekday:"short"})} <b>${d.getDate()}</b></div>
-        <div class="cwev">${items.length?items.map(e=>`<span class="cev">${fmtTime(e.start)} ${esc(e.title)}</span>`).join(""):'<span class="cnone">—</span>'}</div></div>`;
+        <div class="cwev">${items.length?items.map(e=>`<span class="cev" onclick="editEvent('${e.id}')" style="cursor:pointer" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span>`).join(""):'<span class="cnone">—</span>'}</div></div>`;
     }
     box.innerHTML=`<div class="calnav"><button onclick="calNav(-1)">‹</button><span>${weekLabel(mon)}</span><button onclick="calNav(1)">›</button></div><div class="cweek">${h}</div>`;
   } else {
@@ -1093,23 +1102,32 @@ function renderDailyCal(){
       cells+=`<div class="cmcell ${ds===todayStr?'ctoday':''} ${selDay===ds?'csel':''}" onclick="selectDay('${ds}')"><span>${day}</span>${has?'<i class="cdot"></i>':''}</div>`;
     }
     let sel="";
-    if(selDay){ const items=ev.filter(e=>e.date===selDay).sort((a,b)=>a.start.localeCompare(b.start));
-      sel=`<div class="cmsel"><b>${new Date(selDay+"T00:00:00").toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"})}</b>${items.length?items.map(e=>`<span class="cev">${fmtTime(e.start)} ${esc(e.title)}</span>`).join(""):'<span class="cnone">Nothing on.</span>'}</div>`; }
+    if(selDay){ const items=ev.filter(e=>e.date===selDay).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
+      sel=`<div class="cmsel"><b>${new Date(selDay+"T00:00:00").toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"})}</b>${items.length?items.map(e=>`<span class="cev" style="display:flex;align-items:center;gap:6px"><span onclick="editEvent('${e.id}')" style="cursor:pointer;flex:1" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span><button class="evdel" onclick="delEvent('${e.id}')" title="Delete">×</button></span>`).join(""):'<span class="cnone">All Clear</span>'}</div>`; }
     box.innerHTML=`<div class="calnav"><button onclick="calNav(-1)">‹</button><span>${base.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span><button onclick="calNav(1)">›</button></div><div class="cmonth">${cells}</div>${sel}`;
   }
 }
 function addHour(t){ let[h,m]=t.split(":").map(Number); h=(h+1)%24; return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+let editingEvId=null;
 function addToCal(){
   const title=document.getElementById("ac-title").value.trim(); if(!title){ toast("Give it a name"); return; }
   const date=document.getElementById("ac-date").value||lstr(new Date());
-  const timeEl=document.getElementById("ac-time"); const time=timeEl?timeEl.value:"";
-  const start=time||"09:00", end=time?addHour(time):"10:00";
-  const arr=loadUEvents(); arr.push({id:"u"+Date.now(),title,date,start,end,loc:""}); saveUEvents(arr);
-  const ds=date.replace(/-/g,""); const dt=`${ds}T${start.replace(":","")}00/${ds}T${end.replace(":","")}00`;
-  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dt}&ctz=America/New_York`,"_blank");
-  document.getElementById("ac-title").value=""; if(timeEl)timeEl.value="";
-  renderDaily(); toast("Added — confirm in the Google tab");
+  const te=document.getElementById("ac-time"); const time=te?te.value:"";
+  const arr=loadUEvents();
+  if(editingEvId){ const it=arr.find(x=>x.id===editingEvId); if(it){ it.title=title; it.date=date; it.start=time; it.end=time?addHour(time):""; } editingEvId=null; const b=document.getElementById("ac-btn"); if(b)b.textContent="Add"; }
+  else { arr.push({id:"u"+Date.now(),title,date,start:time,end:time?addHour(time):"",loc:""}); }
+  saveUEvents(arr);
+  document.getElementById("ac-title").value=""; if(te)te.value="";
+  renderBrief(); renderDailyCal(); toast("Saved");
 }
+function editEvent(id){ const e=loadUEvents().find(x=>x.id===id); if(!e)return; editingEvId=id;
+  document.getElementById("ac-title").value=e.title; document.getElementById("ac-date").value=e.date||lstr(new Date());
+  const te=document.getElementById("ac-time"); if(te)te.value=e.start||"";
+  const b=document.getElementById("ac-btn"); if(b)b.textContent="Update";
+  if(calCollapsed){ calCollapsed=false; lset("nsjhq_calcol",false); applyCalCollapse(); }
+  document.getElementById("ac-title").focus();
+}
+function delEvent(id){ saveUEvents(loadUEvents().filter(x=>x.id!==id)); renderBrief(); renderDailyCal(); toast("Deleted"); }
 
 function taskRow(g,it){
   return `<div class="task ${it.done?'done':''}" ondragover="taskDragOver(event)" ondrop="taskDrop(event,'${g}','${it.id}')">
