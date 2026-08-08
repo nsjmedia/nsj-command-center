@@ -1088,7 +1088,7 @@ function renderDailyCal(){
     for(let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); const ds=lstr(d);
       const items=ev.filter(e=>e.date===ds).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
       h+=`<div class="cwrow ${ds===todayStr?'ctoday':''}"><div class="cwday">${d.toLocaleDateString("en-US",{weekday:"short"})} <b>${d.getDate()}</b></div>
-        <div class="cwev">${items.length?items.map(e=>`<span class="cev" onclick="editEvent('${e.id}')" style="cursor:pointer" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span>`).join(""):'<span class="cnone">—</span>'}</div></div>`;
+        <div class="cwev">${items.length?items.map(e=>`<span class="cev" style="display:flex;align-items:center;gap:6px"><span onclick="editEvent('${e.id}')" style="cursor:pointer;flex:1" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span><button class="evdel" onclick="delEvent('${e.id}')" title="Delete">×</button></span>`).join(""):'<span class="cnone">—</span>'}</div></div>`;
     }
     box.innerHTML=`<div class="calnav"><button onclick="calNav(-1)">‹</button><span>${weekLabel(mon)}</span><button onclick="calNav(1)">›</button></div><div class="cweek">${h}</div>`;
   } else {
@@ -1101,9 +1101,9 @@ function renderDailyCal(){
       const has=ev.some(e=>e.date===ds);
       cells+=`<div class="cmcell ${ds===todayStr?'ctoday':''} ${selDay===ds?'csel':''}" onclick="selectDay('${ds}')"><span>${day}</span>${has?'<i class="cdot"></i>':''}</div>`;
     }
-    let sel="";
-    if(selDay){ const items=ev.filter(e=>e.date===selDay).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
-      sel=`<div class="cmsel"><b>${new Date(selDay+"T00:00:00").toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"})}</b>${items.length?items.map(e=>`<span class="cev" style="display:flex;align-items:center;gap:6px"><span onclick="editEvent('${e.id}')" style="cursor:pointer;flex:1" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span><button class="evdel" onclick="delEvent('${e.id}')" title="Delete">×</button></span>`).join(""):'<span class="cnone">All Clear</span>'}</div>`; }
+    let sel=""; const selShow=selDay||todayStr;
+    if(selShow){ const items=ev.filter(e=>e.date===selShow).sort((a,b)=>(a.start||"").localeCompare(b.start||""));
+      sel=`<div class="cmsel"><b>${new Date(selShow+"T00:00:00").toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"})}</b>${items.length?items.map(e=>`<span class="cev" style="display:flex;align-items:center;gap:6px"><span onclick="editEvent('${e.id}')" style="cursor:pointer;flex:1" title="Click to edit">${e.start?fmtTime(e.start)+' ':''}${esc(e.title)}</span><button class="evdel" onclick="delEvent('${e.id}')" title="Delete">×</button></span>`).join(""):'<span class="cnone">All Clear</span>'}</div>`; }
     box.innerHTML=`<div class="calnav"><button onclick="calNav(-1)">‹</button><span>${base.toLocaleDateString("en-US",{month:"long",year:"numeric"})}</span><button onclick="calNav(1)">›</button></div><div class="cmonth">${cells}</div>${sel}`;
   }
 }
